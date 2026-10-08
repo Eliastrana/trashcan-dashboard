@@ -25,6 +25,8 @@ const ICONS = {
   stop: ['M8 5v14', 'M16 5v14'],
   start: ['M7 4.5v15l12-7.5z'],
 };
+// logos that are plain black, which are flipped to white in dark mode (see app.css)
+const MONO = new Set(['ollama', 'ssh', 'lock']);
 function icon(name) {
   const svg = document.createElementNS(SVG_NS, 'svg');
   svg.setAttribute('viewBox', '0 0 24 24');
@@ -115,7 +117,15 @@ function renderServices(list, showControls) {
       g.append(c); body.append(g);
     }
     const tr = el('tr', `svc ${s.state}`);
-    const name = el('td', 'name', s.name);
+    const name = el('td', 'name');
+    const wrap = el('div', 'namewrap');
+    if (s.icon) {
+      const img = el('img', `logo ${MONO.has(s.icon) ? 'mono' : ''}`);
+      img.src = `/icons/${s.icon}.svg`; img.alt = ''; img.width = 24; img.height = 24;
+      wrap.append(img);
+    }
+    const text = el('div', 'nametext', s.name);
+    wrap.append(text); name.append(wrap);
     if (s.url) {
       const line = el('span', 'url');
       if (/^https?:\/\//.test(s.url)) {
@@ -123,12 +133,12 @@ function renderServices(list, showControls) {
         a.href = s.url; a.target = '_blank'; a.rel = 'noopener noreferrer';
         line.append(a);
       } else line.textContent = s.url;
-      name.append(line);
+      text.append(line);
     }
     const notes = [];
     if (s.certDays !== null) notes.push(`sertifikat ${s.certDays} d`);
     if (s.state === 'down' && s.detail) notes.push(s.detail);
-    if (notes.length) name.append(el('span', 'detail', notes.join(' · ')));
+    if (notes.length) text.append(el('span', 'detail', notes.join(' · ')));
     tr.append(
       name,
       el('td', 'st', ''),

@@ -59,6 +59,10 @@ tr.group td { padding-top: 1.1rem; border-bottom: 1px solid var(--ink); font-siz
 .url { display: block; color: var(--muted); font-size: 0.8rem; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; word-break: break-all; }
 .url a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
 .url a:hover { color: var(--ink); }
+.namewrap { display: flex; align-items: center; gap: 0.7rem; }
+img.logo { flex: none; width: 1.5rem; height: 1.5rem; border-radius: 4px; }
+.nametext { min-width: 0; }
+@media (prefers-color-scheme: dark) { img.logo.mono { filter: invert(1); } }
 .detail { display: block; color: var(--muted); font-size: 0.8rem; }
 .bar { display: inline-grid; grid-template-columns: repeat(48, 3px); gap: 1px; height: 14px; vertical-align: middle; }
 .bar i { background: var(--tick); }

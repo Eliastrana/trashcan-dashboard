@@ -26,22 +26,22 @@ fs.mkdirSync(DATA, { recursive: true, mode: 0o700 });
 // ---------------------------------------------------------------- what to check
 const local = (port, p = '/') => ({ kind: 'http', url: `http://127.0.0.1:${port}${p}` });
 const SERVICES = [
-  { id: 'caddy',     name: 'Caddy (reverse proxy)',     group: 'Edge',     kind: 'tcp', port: 8443, link: '127.0.0.1:8443 (443 utenfra)' },
-  { id: 'arcade',    name: 'arcade.eliastrana.no',      group: 'Websites', kind: 'public', host: 'arcade.eliastrana.no', link: 'https://arcade.eliastrana.no' },
-  { id: 'hitster',   name: 'hitster.eliastrana.no',     group: 'Websites', kind: 'public', host: 'hitster.eliastrana.no', link: 'https://hitster.eliastrana.no' },
-  { id: 'map',       name: 'minecraftmap.eliastrana.no', group: 'Websites', kind: 'public', host: 'minecraftmap.eliastrana.no', link: 'https://minecraftmap.eliastrana.no' },
-  { id: 'llm',       name: 'llm.eliastrana.no',         group: 'Websites', kind: 'public', host: 'llm.eliastrana.no', link: 'https://llm.eliastrana.no' },
-  { id: 'arena',     name: 'Arena server',              group: 'Backends', ...local(3001), link: '127.0.0.1:3001' },
-  { id: 'hitweb',    name: 'Ikke-Hitster web',          group: 'Backends', ...local(3010), link: '127.0.0.1:3010' },
-  { id: 'hitws',     name: 'Ikke-Hitster game server',  group: 'Backends', ...local(3002, '/health'), link: '127.0.0.1:3002' },
-  { id: 'mcpack',    name: 'Minecraft resource packs',  group: 'Backends', ...local(8090), link: 'http://eliastrana.tplinkdns.com:8090' },
-  { id: 'chatbot',   name: 'Chat (llm.eliastrana.no)',  group: 'Backends', ...local(3030), link: '127.0.0.1:3030' },
-  { id: 'llmgate',   name: 'Login for llm.eliastrana.no', group: 'Backends', ...local(3040, '/login'), link: '127.0.0.1:3040' },
-  { id: 'bluemap',   name: 'BlueMap',                   group: 'Backends', ...local(8100), link: '127.0.0.1:8100' },
-  { id: 'minecraft', name: 'Minecraft server',          group: 'Games',    kind: 'tcp', port: 25565, link: 'eliastrana.tplinkdns.com:25565' },
-  { id: 'ssh',       name: 'SSH portfolio',             group: 'Games',    kind: 'banner', port: 2222, expect: 'SSH-', link: 'ssh portfolio.eliastrana.no' },
-  { id: 'plex',      name: 'Plex',                      group: 'Other',    ...local(32400, '/identity'), link: 'http://192.168.0.138:32400/web' },
-  { id: 'ollama',    name: 'Ollama',                    group: 'Other',    ...local(11434), link: 'https://llm.eliastrana.no/ollama/ (api)' },
+  { id: 'caddy', icon: 'caddy',     name: 'Caddy (reverse proxy)',     group: 'Edge',     kind: 'tcp', port: 8443, link: '127.0.0.1:8443 (443 utenfra)' },
+  { id: 'arcade', icon: 'arcade',    name: 'arcade.eliastrana.no',      group: 'Websites', kind: 'public', host: 'arcade.eliastrana.no', link: 'https://arcade.eliastrana.no' },
+  { id: 'hitster', icon: 'hitster',   name: 'hitster.eliastrana.no',     group: 'Websites', kind: 'public', host: 'hitster.eliastrana.no', link: 'https://hitster.eliastrana.no' },
+  { id: 'map', icon: 'minecraft',       name: 'minecraftmap.eliastrana.no', group: 'Websites', kind: 'public', host: 'minecraftmap.eliastrana.no', link: 'https://minecraftmap.eliastrana.no' },
+  { id: 'llm', icon: 'ollama',       name: 'llm.eliastrana.no',         group: 'Websites', kind: 'public', host: 'llm.eliastrana.no', link: 'https://llm.eliastrana.no' },
+  { id: 'arena', icon: 'arcade',     name: 'Arena server',              group: 'Backends', ...local(3001), link: '127.0.0.1:3001' },
+  { id: 'hitweb', icon: 'hitster',    name: 'Ikke-Hitster web',          group: 'Backends', ...local(3010), link: '127.0.0.1:3010' },
+  { id: 'hitws', icon: 'hitster',     name: 'Ikke-Hitster game server',  group: 'Backends', ...local(3002, '/health'), link: '127.0.0.1:3002' },
+  { id: 'mcpack', icon: 'minecraft',    name: 'Minecraft resource packs',  group: 'Backends', ...local(8090), link: 'http://eliastrana.tplinkdns.com:8090' },
+  { id: 'chatbot', icon: 'ollama',   name: 'Chat (llm.eliastrana.no)',  group: 'Backends', ...local(3030), link: '127.0.0.1:3030' },
+  { id: 'llmgate', icon: 'lock',   name: 'Login for llm.eliastrana.no', group: 'Backends', ...local(3040, '/login'), link: '127.0.0.1:3040' },
+  { id: 'bluemap', icon: 'minecraft',   name: 'BlueMap',                   group: 'Backends', ...local(8100), link: '127.0.0.1:8100' },
+  { id: 'minecraft', icon: 'minecraft', name: 'Minecraft server',          group: 'Games',    kind: 'tcp', port: 25565, link: 'eliastrana.tplinkdns.com:25565' },
+  { id: 'ssh', icon: 'ssh',       name: 'SSH portfolio',             group: 'Games',    kind: 'banner', port: 2222, expect: 'SSH-', link: 'ssh portfolio.eliastrana.no' },
+  { id: 'plex', icon: 'plex',      name: 'Plex',                      group: 'Other',    ...local(32400, '/identity'), link: 'http://192.168.0.138:32400/web' },
+  { id: 'ollama', icon: 'ollama',    name: 'Ollama',                    group: 'Other',    ...local(11434), link: 'https://llm.eliastrana.no/ollama/ (api)' },
 ];
 
 const now = () => Date.now();
@@ -160,7 +160,7 @@ function view() {
       }
       const up = h.filter(([, ok]) => ok).length;
       return {
-        id: s.id, name: s.name, group: s.group, url: s.link || null,
+        id: s.id, name: s.name, group: s.group, icon: s.icon || null, url: s.link || null,
         controls: controlsEnabled() && Object.hasOwn(CONTROLS, s.id) ? CONTROLS[s.id] : [],
         busy: busy[s.id]?.action ?? null,
         state: !r ? 'unknown' : !r.ok ? 'down' : r.ms > SLOW_MS ? 'slow' : 'up',
@@ -283,6 +283,7 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === 'GET' && url.pathname === '/favicon.svg') return send(res, 200, asset('favicon.svg'), 'image/svg+xml', { 'Cache-Control': 'public, max-age=86400' });
   if (req.method === 'GET' && url.pathname === '/favicon.ico') return send(res, 302, '', 'text/plain', { Location: '/favicon.svg' });
+  if (req.method === 'GET' && authed && /^\/icons\/[a-z]+\.svg$/.test(url.pathname) && fs.existsSync(path.join(HERE, 'public', url.pathname))) return send(res, 200, asset(url.pathname.slice(1)), 'image/svg+xml', { 'Cache-Control': 'private, max-age=86400' });
   if (req.method === 'GET' && url.pathname === '/app.css') return send(res, 200, asset('app.css'), 'text/css; charset=utf-8');
   if (req.method === 'GET' && url.pathname === '/app.js') return authed ? send(res, 200, asset('app.js'), 'text/javascript; charset=utf-8') : send(res, 401, '');
 
