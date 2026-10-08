@@ -322,10 +322,10 @@ index 0000000..4e4ee82
 +  }
 +}
 diff --git a/pages/index.tsx b/pages/index.tsx
-index 4b98176..84090f3 100644
+index 4b98176..351afc3 100644
 --- a/pages/index.tsx
 +++ b/pages/index.tsx
-@@ -1 +1,269 @@
+@@ -1 +1,289 @@
 -export { default, getServerSideProps } from './api/home';
 +import { useEffect, useRef, useState } from "react";
 +import remarkGfm from "remark-gfm";
@@ -395,11 +395,30 @@ index 4b98176..84090f3 100644
 +  const bottomRef = useRef<HTMLDivElement | null>(null);
 +  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 +
++  // Follow the answer down while it is written, but only for as long as the person is at the bottom. As soon as they
++  // scroll up to read, the page stops pulling them back, and following starts again when they reach the bottom.
++  const followRef = useRef(true);
++
 +  useEffect(() => {
++    const onScroll = () => {
++      const fromBottom = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
++      followRef.current = fromBottom < 120;
++    };
++    window.addEventListener("scroll", onScroll, { passive: true });
++    return () => window.removeEventListener("scroll", onScroll);
++  }, []);
++
++  const lastScrollYRef = useRef(0);       // where our own last scroll to the bottom left the page
++
++  useEffect(() => {
++    // Moved up since our last scroll? Then the person is reading, so leave the page where they put it.
++    if (window.scrollY < lastScrollYRef.current - 40) followRef.current = false;
++    if (!followRef.current) return;
 +    bottomRef.current?.scrollIntoView({
 +      behavior: loading ? "auto" : "smooth",
 +      block: "end",
 +    });
++    lastScrollYRef.current = window.scrollY;
 +  }, [messages, loading]);
 +
 +  // Let the text field grow with what is typed, up to a limit.
@@ -416,6 +435,7 @@ index 4b98176..84090f3 100644
 +
 +    setInput("");
 +    setLoading(true);
++    followRef.current = true;          // a new question always scrolls down to its answer
 +
 +    const assistantIndex = messages.length + 1;
 +
