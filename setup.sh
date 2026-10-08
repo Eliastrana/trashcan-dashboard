@@ -234,6 +234,7 @@ step_arena() {
   tmp=$(mktemp -d)
   run git clone -q --depth 1 --branch "$ARENA_BRANCH" "$ARENA_GIT" "$tmp/src"
   sync_in "$tmp/src" "$d" --exclude .git
+  restore_state arena-music || warn "no saved menu music (arena-music.tar.gz): the game plays its built-in tune instead"
   run mkdir -p "$d/logs"; lock_dir $a
   as_app $a "$d" "npm ci --omit=dev --silent"
   ENVV=(HOME="$d"); ARGV=("$NODE/bin/node" "$d/server/index.js")
