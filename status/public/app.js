@@ -1,6 +1,6 @@
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
-const LABEL = { up: 'opp', slow: 'treg', down: 'nede', unknown: '?' };
+const LABEL = { up: 'oppe', slow: 'treg', down: 'nede', unknown: '?' };
 const BUSY = { stop: 'Setter på pause …', start: 'Starter …', restart: 'Starter på nytt …' };
 let anyBusy = false;
 
