@@ -46,6 +46,11 @@ dd.loadrow { display: grid; gap: 0.3rem; }
 .loadline .when { color: var(--muted); }
 .loadline strong { font-weight: 600; }
 .loadline.warn .meter .fill { background: var(--warn); } .loadline.bad .meter .fill { background: var(--bad); }
+dd.toprow { display: grid; gap: 0.3rem; }
+.topline { display: grid; grid-template-columns: 9.5rem 10rem 3.6rem auto; align-items: center; column-gap: 0.6rem; }
+.topline .who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.topline strong { font-weight: 600; text-align: right; }
+.topline small { color: var(--muted); }
 dd.meterrow strong { min-width: 3.2rem; font-weight: 600; }
 dl.machine small { color: var(--muted); font-size: 0.85em; font-family: inherit; }
 
@@ -98,6 +103,10 @@ body.center { display: grid; grid-template-columns: minmax(0, 1fr); place-items:
   dl.machine { grid-template-columns: 6.5rem 1fr; }
   .meter { width: 100%; margin-bottom: 0.15rem; }
   .loadline { grid-template-columns: 3.4rem 1fr 3.2rem; }
+  .topline { grid-template-columns: 1fr auto; row-gap: 0.1rem; }
+  .topline .meter { grid-column: 1 / -1; width: 100%; order: 3; }
+  .topline strong { text-align: right; }
+  .topline small { grid-column: 1 / -1; order: 4; }
   .loadline .meter { margin-bottom: 0; }
   .hide-s { display: none; }
   table, tbody { display: block; }

@@ -107,6 +107,28 @@ function loadRow(dl, pcts) {
   dl.append(dd);
 }
 
+// Which apps are using the machine, biggest first: share of the whole processor (bar and number) and memory.
+function topRow(dl, top) {
+  if (!top || !top.length) return;
+  dl.append(el('dt', null, 'Mest aktive'));
+  const dd = el('dd', 'toprow');
+  dd.title = 'Hvilke apper som bruker mest prosessor akkurat nå, som andel av hele maskinen, og hvor mye minne de har. Hver app kjører i sin egen konto.';
+  const nb = (n, digits = 1) => n.toLocaleString('nb-NO', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  for (const p of top) {
+    const line = el('div', 'topline');
+    const meter = el('span', 'meter');
+    meter.setAttribute('role', 'img');
+    meter.setAttribute('aria-label', `${p.label}: ${nb(p.cpuPct)} % av prosessoren`);
+    const fill = el('span', 'fill');
+    fill.style.width = `${Math.max(0, Math.min(100, p.cpuPct))}%`;
+    meter.append(fill);
+    const mem = p.memMB >= 1024 ? `${nb(p.memMB / 1024)} GB` : `${p.memMB} MB`;
+    line.append(el('span', 'who', p.label), meter, el('strong', null, `${nb(p.cpuPct)} %`), el('small', null, `${mem} minne`));
+    dd.append(line);
+  }
+  dl.append(dd);
+}
+
 function renderMachine(m) {
   const dl = $('machine');
   dl.replaceChildren();
@@ -118,6 +140,7 @@ function renderMachine(m) {
   meterRow(dl, 'Prosessor', busy, `${busy} %`, `i bruk av ${m.cores} kjerner`, busy >= 90 ? 'bad' : busy >= 65 ? 'warn' : '',
     'Hvor stor del av tiden kjernene har vært opptatt det siste minuttet.');
   loadRow(dl, loadPct);
+  topRow(dl, m.top);
   if (m.memUsedGB !== null) {
     const memPct = Math.round((m.memUsedGB / m.memTotalGB) * 100);
     meterRow(dl, 'Minne', memPct, `${memPct} %`, `${m.memUsedGB} av ${m.memTotalGB} GB`, memPct >= 90 ? 'warn' : '');

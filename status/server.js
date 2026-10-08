@@ -108,6 +108,43 @@ async function cpuPercent() {
   return Math.round((1 - (now_.idle - before.idle) / total) * 100);
 }
 
+// Who is using the machine right now. `top` takes two readings one second apart and the second one holds real CPU use
+// over that second. Every app runs in its own account (_svc_<app>), so processes are grouped by account; programs that
+// still run in the admin or personal accounts are named after what they are.
+const APP_NAMES = {
+  _svc_hitster: 'Ikke-Hitster', _svc_arena: 'Arcade', _svc_minecraft: 'Minecraft-server', _svc_caddy: 'Caddy',
+  _svc_chatbot: 'Chat (llm)', _svc_llmgate: 'Innlogging (llm)', _svc_mcpack: 'Ressurspakker', _svc_status: 'Statussiden',
+  elias: 'SSH-portfolio',
+};
+function whoIs(user, command) {
+  if (APP_NAMES[user]) return APP_NAMES[user];
+  if (/plex/i.test(command)) return 'Plex';
+  if (/ollama/i.test(command)) return 'Ollama';
+  if (user === 'root' || user.startsWith('_')) return 'macOS (systemet)';
+  return command.trim() || user;
+}
+const toMB = (n, unit) => ({ B: 1 / 1048576, K: 1 / 1024, M: 1, G: 1024 }[unit] ?? 0) * n;
+async function topProcesses(cores) {
+  const out = await new Promise((resolve) => execFile('top', ['-l', '2', '-s', '1', '-n', '60', '-o', 'cpu', '-stats', 'pid,user,command,cpu,mem'], { timeout: 10_000 }, (e, o) => resolve(e ? '' : o)));
+  const second = out.split(/^PID\s.*$/m).pop() || '';
+  const groups = new Map();
+  for (const line of second.split('\n')) {
+    const m = /^\s*(\d+)\s+(\S+)\s+(.+?)\s+(\d+(?:[.,]\d+)?)\s+(\d+(?:\.\d+)?)([BKMG])[+-]?\s*$/.exec(line);
+    if (!m) continue;
+    const [, , user, command, cpu, mem, unit] = m;
+    if (command.trim() === 'top') continue;                                   // our own measuring
+    const label = whoIs(user, command);
+    const g = groups.get(label) || { label, cpu: 0, memMB: 0 };
+    g.cpu += Number(cpu.replace(',', '.')); g.memMB += toMB(Number(mem), unit);
+    groups.set(label, g);
+  }
+  // top counts 100 % per core, so dividing by the number of cores gives the share of the whole machine.
+  return [...groups.values()]
+    .map((g) => ({ label: g.label, cpuPct: +(g.cpu / cores).toFixed(1), memMB: Math.round(g.memMB) }))
+    .sort((a, b) => b.cpuPct - a.cpuPct || b.memMB - a.memMB)
+    .slice(0, 7);
+}
+
 async function machine() {
   const cores = os.cpus().length;
   const load = os.loadavg();
@@ -123,7 +160,8 @@ async function machine() {
   const df = (await sh('df', ['-k', '/System/Volumes/Data'])).split('\n')[1]?.trim().split(/\s+/);
   if (df) disk = { totalGB: Math.round(Number(df[1]) / 1048576), freeGB: Math.round(Number(df[3]) / 1048576), usedPct: Math.round((1 - Number(df[3]) / Number(df[1])) * 100) };
   const cpuPct = await cpuPercent();
-  return { cores, load, cpuPct, memTotalGB: +(memTotal / 2 ** 30).toFixed(1), memUsedGB: memUsed === null ? null : +(memUsed / 2 ** 30).toFixed(1), disk, uptimeS: Math.round(os.uptime()) };
+  const top = await topProcesses(cores);
+  return { cores, load, cpuPct, top, memTotalGB: +(memTotal / 2 ** 30).toFixed(1), memUsedGB: memUsed === null ? null : +(memUsed / 2 ** 30).toFixed(1), disk, uptimeS: Math.round(os.uptime()) };
 }
 
 // ---------------------------------------------------------------- sampling + history
