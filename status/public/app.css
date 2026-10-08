@@ -41,6 +41,11 @@ dd.meterrow { display: flex; align-items: center; flex-wrap: wrap; gap: 0 0.6rem
 .meter { display: inline-block; width: 10rem; height: 0.7rem; background: var(--tick); }
 .meter .fill { display: block; height: 100%; background: var(--ok); }
 dd.warn .meter .fill { background: var(--warn); } dd.bad .meter .fill { background: var(--bad); }
+dd.loadrow { display: grid; gap: 0.3rem; }
+.loadline { display: grid; grid-template-columns: 3.4rem 10rem 3.2rem; align-items: center; column-gap: 0.6rem; }
+.loadline .when { color: var(--muted); }
+.loadline strong { font-weight: 600; }
+.loadline.warn .meter .fill { background: var(--warn); } .loadline.bad .meter .fill { background: var(--bad); }
 dd.meterrow strong { min-width: 3.2rem; font-weight: 600; }
 dl.machine small { color: var(--muted); font-size: 0.85em; font-family: inherit; }
 
@@ -92,6 +97,8 @@ body.center { display: grid; grid-template-columns: minmax(0, 1fr); place-items:
   main { padding-top: 1.25rem; }
   dl.machine { grid-template-columns: 6.5rem 1fr; }
   .meter { width: 100%; margin-bottom: 0.15rem; }
+  .loadline { grid-template-columns: 3.4rem 1fr 3.2rem; }
+  .loadline .meter { margin-bottom: 0; }
   .hide-s { display: none; }
   table, tbody { display: block; }
   thead { display: none; }

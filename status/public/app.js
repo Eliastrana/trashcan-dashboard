@@ -86,6 +86,27 @@ function meterRow(dl, label, pct, value, note, level, hint) {
   dl.append(dd);
 }
 
+// How busy the machine has been over the last 1, 5 and 15 minutes, as three short bars one above the other, so a
+// rising or falling trend can be seen at a glance. 100 % means every core fully taken; more than that means a queue.
+function loadRow(dl, pcts) {
+  dl.append(el('dt', null, 'Belastning'));
+  const dd = el('dd', 'loadrow');
+  dd.title = 'Gjennomsnittlig belastning over tre tidsrom. 100 % betyr at alle kjernene er helt opptatt, mer enn det betyr at oppgaver må vente i kø.';
+  [['1 min', pcts[0]], ['5 min', pcts[1]], ['15 min', pcts[2]]].forEach(([label, pct]) => {
+    const level = pct > 100 ? 'bad' : pct > 70 ? 'warn' : '';
+    const line = el('div', `loadline ${level}`);
+    const meter = el('span', 'meter');
+    meter.setAttribute('role', 'img');
+    meter.setAttribute('aria-label', `Belastning siste ${label}: ${pct} %`);
+    const fill = el('span', 'fill');
+    fill.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+    meter.append(fill);
+    line.append(el('small', 'when', label), meter, el('strong', null, `${pct} %`));
+    dd.append(line);
+  });
+  dl.append(dd);
+}
+
 function renderMachine(m) {
   const dl = $('machine');
   dl.replaceChildren();
@@ -96,7 +117,7 @@ function renderMachine(m) {
   const busy = m.cpuPct ?? loadPct[0];
   meterRow(dl, 'Prosessor', busy, `${busy} %`, `i bruk av ${m.cores} kjerner`, busy >= 90 ? 'bad' : busy >= 65 ? 'warn' : '',
     'Hvor stor del av tiden kjernene har vært opptatt det siste minuttet.');
-  row(dl, 'Belastning', `${loadPct[0]} %`, `siste minutt · ${loadPct[1]} % siste 5 min · ${loadPct[2]} % siste 15 min`, loadPct[0] > 100 ? 'bad' : loadPct[0] > 70 ? 'warn' : '');
+  loadRow(dl, loadPct);
   if (m.memUsedGB !== null) {
     const memPct = Math.round((m.memUsedGB / m.memTotalGB) * 100);
     meterRow(dl, 'Minne', memPct, `${memPct} %`, `${m.memUsedGB} av ${m.memTotalGB} GB`, memPct >= 90 ? 'warn' : '');
