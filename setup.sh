@@ -186,7 +186,7 @@ step_chatbot() {
   lock_dir $a
   say "installing dependencies and building, as $(user_of $a) (takes a few minutes)"
   as_app $a "$d" "npm ci --silent && npx next build >/dev/null"
-  ENVV=(HOME="$d" NODE_ENV=production OLLAMA_HOST=http://127.0.0.1:11434 DEFAULT_MODEL="$CHATBOT_MODEL")
+  ENVV=(HOME="$d" NODE_ENV=production OLLAMA_HOST=http://127.0.0.1:11434 DEFAULT_MODEL="$CHATBOT_MODEL" CHAT_MODEL="$CHATBOT_MODEL")
   ARGV=("$NODE/bin/node" "$d/node_modules/next/dist/bin/next" start -p 3030 -H 127.0.0.1)
   plist "$(label_of $a)" $a "$d" "$d/logs/chatbot.log"
   daemon_up "$(label_of $a)"

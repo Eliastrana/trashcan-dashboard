@@ -76,7 +76,7 @@ sudo ./backup.sh /Volumes/YourDrive/trashcan-backup-$(date +%Y%m%d)
 
 - **Router**: forward external 443 to the trashcan's port 8443, and 80 to 80 (Caddy asks Let's Encrypt for certificates through them). Minecraft needs 25565.
 - **DNS**: `A` records for `arcade`, `hitster`, `status`, `llm`, `minecraftmap` (and `canvas`) pointing at your public IP.
-- **Ollama**: install from https://ollama.com, then `ollama pull gemma` and `ollama pull llama3.2:1b`. It listens on `127.0.0.1:11434`.
+- **Ollama**: install from https://ollama.com, then `ollama pull gemma3:1b` (the chat page's model, small and fast), and optionally `ollama pull gemma` and `ollama pull llama3.2:1b`. It listens on `127.0.0.1:11434`.
 - **Hitster keys**: they live in `/opt/apps/hitster/web/.env.local` and come back with the backup. If you start over without a backup you need
   `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL=https://hitster.eliastrana.no` and `NEXT_PUBLIC_MP_URL=wss://hitster.eliastrana.no`
   (the Spotify redirect URI `https://hitster.eliastrana.no/api/auth/callback/spotify` must be in the Spotify dashboard).

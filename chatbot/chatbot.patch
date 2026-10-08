@@ -194,16 +194,16 @@ index ad69356..e7dbe3f 100644
      "react": "19.0.0",
 diff --git a/pages/api/web-gemma.ts b/pages/api/web-gemma.ts
 new file mode 100644
-index 0000000..45124c3
+index 0000000..4e4ee82
 --- /dev/null
 +++ b/pages/api/web-gemma.ts
 @@ -0,0 +1,123 @@
 +import type { NextApiRequest, NextApiResponse } from "next";
 +
-+// Chat endpoint for the page. It always answers with plain Gemma and never touches the internet:
++// Chat endpoint for the page. It always answers with one small Gemma model and never touches the internet:
 +// the model name and any "web search" flag in the request are ignored on purpose.
 +const OLLAMA_BASE_URL = "http://127.0.0.1:11434";
-+const MODEL = "gemma:latest";
++const MODEL = process.env.CHAT_MODEL || "gemma3:1b";   // small and fast; set CHAT_MODEL to use another one
 +const MAX_QUESTION_LENGTH = 8000;
 +
 +function writeJsonLine(res: NextApiResponse, data: unknown) {
