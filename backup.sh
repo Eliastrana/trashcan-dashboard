@@ -1,5 +1,5 @@
 #!/bin/bash
-# Save everything that git cannot bring back: passwords, API keys, the Minecraft world, the arcade, certificates.
+# Save everything that git cannot bring back: passwords, API keys, the Minecraft world, certificates.
 #
 #   sudo ./backup.sh [destination-folder]        default: ./trashcan-backup-<date>
 #
@@ -24,7 +24,6 @@ pack() {   # pack <app> <tar flags and paths relative to /opt/apps...>
 [ -d "$APPS/status/data" ]   && pack status  status/data
 [ -d "$APPS/llmgate/data" ]  && pack llmgate llmgate/data
 [ -f "$APPS/hitster/web/.env.local" ] && pack hitster hitster/web/.env.local
-[ -d "$APPS/arena" ]         && pack arena   --exclude node_modules --exclude logs arena
 [ -d "$APPS/mcpack/mc-packs" ] && pack mcpack mcpack/mc-packs
 [ -d "$APPS/caddy/data" ]    && pack caddy   caddy/data
 

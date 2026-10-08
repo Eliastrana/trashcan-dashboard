@@ -9,7 +9,7 @@ is ever reset. Every app runs in its **own locked-down macOS account**, started 
 | llm login gate (`llm-gate/`) | `_svc_llmgate` | 3040 | this repo |
 | chat page for Ollama | `_svc_chatbot` | 3030 | [chatbot-ollama](https://github.com/ivanfioravanti/chatbot-ollama) + `chatbot/chatbot.patch` |
 | Ikke-Hitster (web, game server) | `_svc_hitster` | 3010, 3002 | [ikke_hitster](https://github.com/Eliastrana/ikke_hitster) |
-| arena (arcade.eliastrana.no) | `_svc_arena` | 3001 | the backup (no git repo) |
+| arena (arcade.eliastrana.no) | `_svc_arena` | 3001 | [arcade](https://github.com/Eliastrana/arcade) |
 | Minecraft resource packs | `_svc_mcpack` | 8090 | the backup (no git repo) |
 | Minecraft server + BlueMap | `_svc_minecraft` | 25565, 8100 | Java is downloaded, the world is in the backup |
 | Caddy (front door, TLS) | `_svc_caddy` | 80, 8443 | binary is downloaded, `config/Caddyfile` is in this repo |
@@ -23,7 +23,7 @@ by nobody else. If one app is hacked, the attacker only gets what that one accou
 ## If the trashcan was reset
 
 You need: the macOS admin account, internet, this repo, and **your latest backup folder** (see "Backups" below: without it
-the Minecraft world, the arcade and every password are gone).
+the Minecraft world, and every password are gone).
 
 1. Install macOS, make the admin account, turn on Remote Login (SSH) if you want to do this remotely.
 2. Install the command line tools (gives `git` and `python3`):
@@ -60,7 +60,7 @@ Running it again is safe: an app that exists is updated and restarted, not dupli
 
 ## Backups
 
-Git holds the code. It does **not** hold passwords, Spotify keys, the Minecraft world, the arcade (which has no repo)
+Git holds the code. It does **not** hold passwords, Spotify keys, the Minecraft world
 or Caddy's certificates. `backup.sh` saves those, one archive per app:
 
 ```bash

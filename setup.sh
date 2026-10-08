@@ -10,7 +10,7 @@
 #   llmgate    the login for llm.eliastrana.no     (code: this repo,                 data: backup)
 #   chatbot    the chat page                       (code: chatbot-ollama + our patch)
 #   hitster    Ikke-Hitster, web and game server   (code: GitHub,                    keys: backup)
-#   arena      arcade.eliastrana.no                (code and data: backup)
+#   arena      arcade.eliastrana.no                (code: GitHub)
 #   mcpack     Minecraft resource packs            (code and data: backup)
 #   minecraft  the Minecraft server (+ BlueMap)    (Java: downloaded,                world: backup)
 #   caddy      the web front door, last            (binary: downloaded, Caddyfile: this repo, certificates: backup)
@@ -227,15 +227,20 @@ step_hitster() {
 
 # ================================================================ apps that only exist on this machine (restored from the backup)
 step_arena() {
-  local a=arena d; d=$(dir_of arena)
+  local a=arena d tmp; d=$(dir_of arena)
+  command -v git >/dev/null || die "git is missing (install the Xcode command line tools: xcode-select --install)"
   create_account $a
-  need_state $a "the arcade's code, it has no git repository"
+  say "fetching the arcade ($ARENA_GIT, branch $ARENA_BRANCH)"
+  tmp=$(mktemp -d)
+  run git clone -q --depth 1 --branch "$ARENA_BRANCH" "$ARENA_GIT" "$tmp/src"
+  sync_in "$tmp/src" "$d" --exclude .git
   run mkdir -p "$d/logs"; lock_dir $a
   as_app $a "$d" "npm ci --omit=dev --silent"
   ENVV=(HOME="$d"); ARGV=("$NODE/bin/node" "$d/server/index.js")
   plist "$(label_of $a)" $a "$d" "$d/logs/arena.log"
   daemon_up "$(label_of $a)"
   wait_for "arena (port 3001)" http_ok http://127.0.0.1:3001/ || die "arena did not start"
+  rm -rf "$tmp"
 }
 
 step_mcpack() {
