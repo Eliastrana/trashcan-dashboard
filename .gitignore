@@ -1,0 +1,8 @@
+# Backups hold passwords, API keys and the Minecraft world. They must never be committed.
+trashcan-backup-*/
+*.tar.gz
+.env*
+secrets/
+node_modules/
+.DS_Store
+.idea/

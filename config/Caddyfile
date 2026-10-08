@@ -1,0 +1,87 @@
+{
+	admin unix//opt/apps/caddy/admin.sock|0600
+	# Router presents this as 443 to the world; Caddy binds a high port so it
+	# needs no root. ACME TLS-ALPN-01 arrives here via that forward.
+	https_port 8443
+}
+
+minecraftmap.eliastrana.no {
+	reverse_proxy 127.0.0.1:8100
+	encode gzip
+}
+
+arcade.eliastrana.no {
+	reverse_proxy 127.0.0.1:3001
+	encode gzip
+}
+
+canvas.eliastrana.no {
+	redir https://arcade.eliastrana.no{uri} 308
+}
+
+hitster.eliastrana.no {
+	@ws header Upgrade websocket
+	handle @ws {
+		reverse_proxy 127.0.0.1:3002
+	}
+	handle {
+		reverse_proxy 127.0.0.1:3010
+	}
+	encode gzip
+}
+
+status.eliastrana.no {
+	reverse_proxy 127.0.0.1:3020
+	encode gzip
+}
+
+llm.eliastrana.no {
+	# The login page and its stylesheet are open to everyone.
+	@gate path /login /logout /gate.css
+	handle @gate {
+		reverse_proxy 127.0.0.1:3040
+	}
+
+	# Everything else: ask the login gate first. Browsers without a session are sent to /login,
+	# scripts without credentials get a plain 401.
+	handle {
+		route {
+			forward_auth 127.0.0.1:3040 {
+				uri /verify
+			}
+
+			# The raw Ollama API for scripts and apps, under /ollama/. Chat and text generation only:
+			# anything that could download, change or delete models is refused.
+			handle_path /ollama/* {
+				@blocked path /api/pull /api/push /api/create /api/delete /api/copy /api/blobs/*
+				respond @blocked 403
+				request_body {
+					max_size 5MB
+				}
+				reverse_proxy 127.0.0.1:11434 {
+					# Ollama only answers requests addressed to localhost, so present the request as one.
+					header_up Host localhost:11434
+					flush_interval -1
+					transport http {
+						response_header_timeout 10m
+						read_timeout 10m
+					}
+				}
+			}
+
+			# The chat page (room for PDF uploads up to 50 MB).
+			handle {
+				request_body {
+					max_size 55MB
+				}
+				reverse_proxy 127.0.0.1:3030 {
+					flush_interval -1
+					transport http {
+						response_header_timeout 10m
+						read_timeout 10m
+					}
+				}
+			}
+		}
+	}
+}

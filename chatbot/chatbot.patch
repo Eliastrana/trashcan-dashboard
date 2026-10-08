@@ -1,0 +1,598 @@
+diff --git a/.env.local.example b/.env.local.example
+deleted file mode 100644
+index c642990..0000000
+--- a/.env.local.example
++++ /dev/null
+@@ -1,3 +0,0 @@
+-# Chatbot Ollama
+-DEFAULT_MODEL="mistral:latest"
+-NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT=""
+diff --git a/package-lock.json b/package-lock.json
+index e29ed87..41cb5a3 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -13,7 +13,7 @@
+         "@tanstack/react-query": "^5.26.0",
+         "eventsource-parser": "^0.1.0",
+         "i18next": "^22.4.13",
+-        "next": "^15.5.2",
++        "next": "^15.5.27",
+         "next-i18next": "^13.2.2",
+         "pdf-parse": "^1.1.1",
+         "react": "19.0.0",
+@@ -1627,9 +1627,9 @@
+       }
+     },
+     "node_modules/@next/env": {
+-      "version": "15.5.2",
+-      "resolved": "https://registry.npmjs.org/@next/env/-/env-15.5.2.tgz",
+-      "integrity": "sha512-Qe06ew4zt12LeO6N7j8/nULSOe3fMXE4dM6xgpBQNvdzyK1sv5y4oAP3bq4LamrvGCZtmRYnW8URFCeX5nFgGg==",
++      "version": "15.5.27",
++      "resolved": "https://registry.npmjs.org/@next/env/-/env-15.5.27.tgz",
++      "integrity": "sha512-WC5hvVqiuFOcRyz6gKPeJkiVvSMf3scNeAV49CdWtVqxmUlzh8UKR6YHt9yiNkh8LngtzqSlVz07/Ma3ZAzchA==",
+       "license": "MIT"
+     },
+     "node_modules/@next/eslint-plugin-next": {
+@@ -1673,9 +1673,9 @@
+       }
+     },
+     "node_modules/@next/swc-darwin-arm64": {
+-      "version": "15.5.2",
+-      "resolved": "https://registry.npmjs.org/@next/swc-darwin-arm64/-/swc-darwin-arm64-15.5.2.tgz",
+-      "integrity": "sha512-8bGt577BXGSd4iqFygmzIfTYizHb0LGWqH+qgIF/2EDxS5JsSdERJKA8WgwDyNBZgTIIA4D8qUtoQHmxIIquoQ==",
++      "version": "15.5.27",
++      "resolved": "https://registry.npmjs.org/@next/swc-darwin-arm64/-/swc-darwin-arm64-15.5.27.tgz",
++      "integrity": "sha512-fBA9QurmK4+uj4wNhmRTuO5zMVRaBHCvp6H93zTG/5i6Yi6TewbvbesXB8YQNj8T99Cwrow87hHiFV6wL/hyMA==",
+       "cpu": [
+         "arm64"
+       ],
+@@ -1689,9 +1689,9 @@
+       }
+     },
+     "node_modules/@next/swc-darwin-x64": {
+-      "version": "15.5.2",
+-      "resolved": "https://registry.npmjs.org/@next/swc-darwin-x64/-/swc-darwin-x64-15.5.2.tgz",
+-      "integrity": "sha512-2DjnmR6JHK4X+dgTXt5/sOCu/7yPtqpYt8s8hLkHFK3MGkka2snTv3yRMdHvuRtJVkPwCGsvBSwmoQCHatauFQ==",
++      "version": "15.5.27",
++      "resolved": "https://registry.npmjs.org/@next/swc-darwin-x64/-/swc-darwin-x64-15.5.27.tgz",
++      "integrity": "sha512-FGZwJwry8qZNHxD/nfwrCwCHHrqx6epqItkkxbYcBQEQ2uw5S43bY83fQB5zbAsZE7TELMjoYkbhsQ4oKM7wwg==",
+       "cpu": [
+         "x64"
+       ],
+@@ -1705,9 +1705,9 @@
+       }
+     },
+     "node_modules/@next/swc-linux-arm64-gnu": {
+-      "version": "15.5.2",
+-      "resolved": "https://registry.npmjs.org/@next/swc-linux-arm64-gnu/-/swc-linux-arm64-gnu-15.5.2.tgz",
+-      "integrity": "sha512-3j7SWDBS2Wov/L9q0mFJtEvQ5miIqfO4l7d2m9Mo06ddsgUK8gWfHGgbjdFlCp2Ek7MmMQZSxpGFqcC8zGh2AA==",
++      "version": "15.5.27",
++      "resolved": "https://registry.npmjs.org/@next/swc-linux-arm64-gnu/-/swc-linux-arm64-gnu-15.5.27.tgz",
++      "integrity": "sha512-GQulAaJYNF1RYuatlsw9/uzbKz4if2V7Ic9nVO+P0ljYPm4yBRTFIl6g5YkKTw40lMLbpy9edLoH44g3jSHMYA==",
+       "cpu": [
+         "arm64"
+       ],
+@@ -1721,9 +1721,9 @@
+       }
+     },
+     "node_modules/@next/swc-linux-arm64-musl": {
+-      "version": "15.5.2",
+-      "resolved": "https://registry.npmjs.org/@next/swc-linux-arm64-musl/-/swc-linux-arm64-musl-15.5.2.tgz",
+-      "integrity": "sha512-s6N8k8dF9YGc5T01UPQ08yxsK6fUow5gG1/axWc1HVVBYQBgOjca4oUZF7s4p+kwhkB1bDSGR8QznWrFZ/Rt5g==",
++      "version": "15.5.27",
++      "resolved": "https://registry.npmjs.org/@next/swc-linux-arm64-musl/-/swc-linux-arm64-musl-15.5.27.tgz",
++      "integrity": "sha512-URFFsUmu8Pi0/1qdnUI7tx7keZw1Mt5zHfrIX1RfDG9Nih8DYxK54WZsDJUX2ZTlii1jgotL7qcbwKnSAES6xQ==",
+       "cpu": [
+         "arm64"
+       ],
+@@ -1737,9 +1737,9 @@
+       }
+     },
+     "node_modules/@next/swc-linux-x64-gnu": {
+-      "version": "15.5.2",
+-      "resolved": "https://registry.npmjs.org/@next/swc-linux-x64-gnu/-/swc-linux-x64-gnu-15.5.2.tgz",
+-      "integrity": "sha512-o1RV/KOODQh6dM6ZRJGZbc+MOAHww33Vbs5JC9Mp1gDk8cpEO+cYC/l7rweiEalkSm5/1WGa4zY7xrNwObN4+Q==",
++      "version": "15.5.27",
++      "resolved": "https://registry.npmjs.org/@next/swc-linux-x64-gnu/-/swc-linux-x64-gnu-15.5.27.tgz",
++      "integrity": "sha512-aJp74z7uvU5jQhyH7lyk+4qSRcTdKbKT9NQE3jiO9kWYkoHZjKi0zzHDbCoZ+v2sJDEiJ/z58R0UlWMGWNF3HA==",
+       "cpu": [
+         "x64"
+       ],
+@@ -1753,9 +1753,9 @@
+       }
+     },
+     "node_modules/@next/swc-linux-x64-musl": {
+-      "version": "15.5.2",
+-      "resolved": "https://registry.npmjs.org/@next/swc-linux-x64-musl/-/swc-linux-x64-musl-15.5.2.tgz",
+-      "integrity": "sha512-/VUnh7w8RElYZ0IV83nUcP/J4KJ6LLYliiBIri3p3aW2giF+PAVgZb6mk8jbQSB3WlTai8gEmCAr7kptFa1H6g==",
++      "version": "15.5.27",
++      "resolved": "https://registry.npmjs.org/@next/swc-linux-x64-musl/-/swc-linux-x64-musl-15.5.27.tgz",
++      "integrity": "sha512-ILl2bQ8MbpvyMpY8AXljb3BXs0MJSC8HXZ6QV5AWpVS7ZELqNPtrHvhUk+SNarvjvICXX8bCS287TCi+gUFVYg==",
+       "cpu": [
+         "x64"
+       ],
+@@ -1769,9 +1769,9 @@
+       }
+     },
+     "node_modules/@next/swc-win32-arm64-msvc": {
+-      "version": "15.5.2",
+-      "resolved": "https://registry.npmjs.org/@next/swc-win32-arm64-msvc/-/swc-win32-arm64-msvc-15.5.2.tgz",
+-      "integrity": "sha512-sMPyTvRcNKXseNQ/7qRfVRLa0VhR0esmQ29DD6pqvG71+JdVnESJaHPA8t7bc67KD5spP3+DOCNLhqlEI2ZgQg==",
++      "version": "15.5.27",
++      "resolved": "https://registry.npmjs.org/@next/swc-win32-arm64-msvc/-/swc-win32-arm64-msvc-15.5.27.tgz",
++      "integrity": "sha512-1MB9Rh5y8TOPN2x7naNTJNkCZQav9c70AI7EBYXxsEewwOffC4DjjwBwKf20NBvcA+u+5jDv7nVmHxunlP2d7Q==",
+       "cpu": [
+         "arm64"
+       ],
+@@ -1785,9 +1785,9 @@
+       }
+     },
+     "node_modules/@next/swc-win32-x64-msvc": {
+-      "version": "15.5.2",
+-      "resolved": "https://registry.npmjs.org/@next/swc-win32-x64-msvc/-/swc-win32-x64-msvc-15.5.2.tgz",
+-      "integrity": "sha512-W5VvyZHnxG/2ukhZF/9Ikdra5fdNftxI6ybeVKYvBPDtyx7x4jPPSNduUkfH5fo3zG0JQ0bPxgy41af2JX5D4Q==",
++      "version": "15.5.27",
++      "resolved": "https://registry.npmjs.org/@next/swc-win32-x64-msvc/-/swc-win32-x64-msvc-15.5.27.tgz",
++      "integrity": "sha512-XtYgpGOswgnyBWXzOEG6q9RhvnSw0CEZ0MbWqCsl5PISgt9EzvJvNW5mU5n1PsphX/lnamzxjgQXH2GUJL8nqg==",
+       "cpu": [
+         "x64"
+       ],
+@@ -7608,12 +7608,12 @@
+       "dev": true
+     },
+     "node_modules/next": {
+-      "version": "15.5.2",
+-      "resolved": "https://registry.npmjs.org/next/-/next-15.5.2.tgz",
+-      "integrity": "sha512-H8Otr7abj1glFhbGnvUt3gz++0AF1+QoCXEBmd/6aKbfdFwrn0LpA836Ed5+00va/7HQSDD+mOoVhn3tNy3e/Q==",
++      "version": "15.5.27",
++      "resolved": "https://registry.npmjs.org/next/-/next-15.5.27.tgz",
++      "integrity": "sha512-F82CrlPZ8GRxBH9RIIoR3qU1t5RT3dv1K8moe8SjlDEquiFipvEI13R1Om90TaUOEwShkWCMlg8+gvTNzfMhvg==",
+       "license": "MIT",
+       "dependencies": {
+-        "@next/env": "15.5.2",
++        "@next/env": "15.5.27",
+         "@swc/helpers": "0.5.15",
+         "caniuse-lite": "^1.0.30001579",
+         "postcss": "8.4.31",
+@@ -7626,15 +7626,15 @@
+         "node": "^18.18.0 || ^19.8.0 || >= 20.0.0"
+       },
+       "optionalDependencies": {
+-        "@next/swc-darwin-arm64": "15.5.2",
+-        "@next/swc-darwin-x64": "15.5.2",
+-        "@next/swc-linux-arm64-gnu": "15.5.2",
+-        "@next/swc-linux-arm64-musl": "15.5.2",
+-        "@next/swc-linux-x64-gnu": "15.5.2",
+-        "@next/swc-linux-x64-musl": "15.5.2",
+-        "@next/swc-win32-arm64-msvc": "15.5.2",
+-        "@next/swc-win32-x64-msvc": "15.5.2",
+-        "sharp": "^0.34.3"
++        "@next/swc-darwin-arm64": "15.5.27",
++        "@next/swc-darwin-x64": "15.5.27",
++        "@next/swc-linux-arm64-gnu": "15.5.27",
++        "@next/swc-linux-arm64-musl": "15.5.27",
++        "@next/swc-linux-x64-gnu": "15.5.27",
++        "@next/swc-linux-x64-musl": "15.5.27",
++        "@next/swc-win32-arm64-msvc": "15.5.27",
++        "@next/swc-win32-x64-msvc": "15.5.27",
++        "sharp": "^0.34.3 || ^0.35.4"
+       },
+       "peerDependencies": {
+         "@opentelemetry/api": "^1.1.0",
+diff --git a/package.json b/package.json
+index ad69356..e7dbe3f 100644
+--- a/package.json
++++ b/package.json
+@@ -17,7 +17,7 @@
+     "@tanstack/react-query": "^5.26.0",
+     "eventsource-parser": "^0.1.0",
+     "i18next": "^22.4.13",
+-    "next": "^15.5.2",
++    "next": "^15.5.27",
+     "next-i18next": "^13.2.2",
+     "pdf-parse": "^1.1.1",
+     "react": "19.0.0",
+diff --git a/pages/api/web-gemma.ts b/pages/api/web-gemma.ts
+new file mode 100644
+index 0000000..45124c3
+--- /dev/null
++++ b/pages/api/web-gemma.ts
+@@ -0,0 +1,123 @@
++import type { NextApiRequest, NextApiResponse } from "next";
++
++// Chat endpoint for the page. It always answers with plain Gemma and never touches the internet:
++// the model name and any "web search" flag in the request are ignored on purpose.
++const OLLAMA_BASE_URL = "http://127.0.0.1:11434";
++const MODEL = "gemma:latest";
++const MAX_QUESTION_LENGTH = 8000;
++
++function writeJsonLine(res: NextApiResponse, data: unknown) {
++  res.write(JSON.stringify(data) + "\n");
++}
++
++export default async function handler(
++  req: NextApiRequest,
++  res: NextApiResponse
++) {
++  if (req.method !== "POST") {
++    return res.status(405).json({ error: "Kun POST er støttet." });
++  }
++
++  const question = req.body?.question;
++
++  if (!question || typeof question !== "string" || !question.trim()) {
++    return res.status(400).json({ error: "Mangler spørsmål." });
++  }
++
++  if (question.length > MAX_QUESTION_LENGTH) {
++    return res.status(413).json({ error: "Spørsmålet er for langt." });
++  }
++
++  res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
++  res.setHeader("Cache-Control", "no-cache, no-transform");
++  res.setHeader("Connection", "keep-alive");
++
++  // Stop generating if the person closes the page, so the CPU is not kept busy for nothing.
++  const abort = new AbortController();
++  res.on("close", () => abort.abort());
++
++  const prompt = `
++Du er en hjelpsom norsk assistent.
++Svar tydelig på norsk. Du kan bruke Markdown (fet skrift, lister, overskrifter og kodeblokker) når det gjør svaret lettere å lese.
++Hvis du er usikker, si at du er usikker.
++
++SPØRSMÅL:
++${question.trim()}
++`;
++
++  try {
++    const ollamaResponse = await fetch(`${OLLAMA_BASE_URL}/api/generate`, {
++      method: "POST",
++      headers: {
++        "Content-Type": "application/json",
++      },
++      body: JSON.stringify({
++        model: MODEL,
++        prompt,
++        stream: true,
++        options: {
++          temperature: 0.2,
++          num_predict: 600,
++        },
++      }),
++      signal: abort.signal,
++    });
++
++    if (!ollamaResponse.ok || !ollamaResponse.body) {
++      const text = await ollamaResponse.text();
++      writeJsonLine(res, {
++        type: "error",
++        error: `Ollama-feil: ${text}`,
++      });
++      return res.end();
++    }
++
++    const reader = ollamaResponse.body.getReader();
++    const decoder = new TextDecoder();
++
++    let buffer = "";
++
++    while (true) {
++      const { value, done } = await reader.read();
++
++      if (done) break;
++
++      buffer += decoder.decode(value, { stream: true });
++
++      const lines = buffer.split("\n");
++      buffer = lines.pop() || "";
++
++      for (const line of lines) {
++        if (!line.trim()) continue;
++
++        try {
++          const parsed = JSON.parse(line);
++
++          if (parsed.response) {
++            writeJsonLine(res, {
++              type: "token",
++              token: parsed.response,
++            });
++          }
++        } catch {
++          // Ignore malformed streaming chunks.
++        }
++      }
++    }
++
++    writeJsonLine(res, {
++      type: "done",
++    });
++
++    return res.end();
++  } catch (err: any) {
++    if (abort.signal.aborted) return res.end();
++
++    writeJsonLine(res, {
++      type: "error",
++      error: err.message || "Ukjent feil.",
++    });
++
++    return res.end();
++  }
++}
+diff --git a/pages/index.tsx b/pages/index.tsx
+index 4b98176..84090f3 100644
+--- a/pages/index.tsx
++++ b/pages/index.tsx
+@@ -1 +1,269 @@
+-export { default, getServerSideProps } from './api/home';
++import { useEffect, useRef, useState } from "react";
++import remarkGfm from "remark-gfm";
++
++import { CodeBlock } from "@/components/Markdown/CodeBlock";
++import { MemoizedReactMarkdown } from "@/components/Markdown/MemoizedReactMarkdown";
++
++type ChatMessage = {
++  role: "user" | "assistant";
++  content: string;
++};
++
++// How answers are drawn. react-markdown never renders raw HTML, so a model answer cannot inject markup.
++const markdownComponents = {
++  code({ className, children }: any) {
++    const match = /language-(\w+)/.exec(className || "");
++    const text = String(children).replace(/\n$/, "");
++    const isBlock = Boolean(match) || text.includes("\n");
++
++    return isBlock ? (
++      <CodeBlock language={(match && match[1]) || ""} value={text} />
++    ) : (
++      <code className="rounded-md bg-neutral-200/70 px-1.5 py-0.5 text-[0.9em] font-medium before:content-none after:content-none">
++        {children}
++      </code>
++    );
++  },
++  pre({ children }: any) {
++    return <>{children}</>;
++  },
++  a({ href, children }: any) {
++    return (
++      <a
++        href={href}
++        target="_blank"
++        rel="noopener noreferrer"
++        className="underline underline-offset-4"
++      >
++        {children}
++      </a>
++    );
++  },
++  table({ children }: any) {
++    return (
++      <div className="my-4 overflow-x-auto rounded-xl border border-neutral-200 bg-white/60">
++        <table className="m-0 w-full border-collapse text-sm">{children}</table>
++      </div>
++    );
++  },
++  th({ children }: any) {
++    return (
++      <th className="border-b border-neutral-200 px-3 py-2 text-left font-semibold">
++        {children}
++      </th>
++    );
++  },
++  td({ children }: any) {
++    return <td className="border-b border-neutral-100 px-3 py-2">{children}</td>;
++  },
++};
++
++export default function Home() {
++  const [messages, setMessages] = useState<ChatMessage[]>([]);
++  const [input, setInput] = useState("");
++  const [loading, setLoading] = useState(false);
++
++  const bottomRef = useRef<HTMLDivElement | null>(null);
++  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
++
++  useEffect(() => {
++    bottomRef.current?.scrollIntoView({
++      behavior: loading ? "auto" : "smooth",
++      block: "end",
++    });
++  }, [messages, loading]);
++
++  // Let the text field grow with what is typed, up to a limit.
++  useEffect(() => {
++    const field = textareaRef.current;
++    if (!field) return;
++    field.style.height = "auto";
++    field.style.height = `${Math.min(field.scrollHeight, 160)}px`;
++  }, [input]);
++
++  async function sendMessage() {
++    const question = input.trim();
++    if (!question || loading) return;
++
++    setInput("");
++    setLoading(true);
++
++    const assistantIndex = messages.length + 1;
++
++    setMessages((prev) => [
++      ...prev,
++      { role: "user", content: question },
++      { role: "assistant", content: "" },
++    ]);
++
++    const update = (change: (content: string) => string) =>
++      setMessages((prev) =>
++        prev.map((msg, index) =>
++          index === assistantIndex ? { ...msg, content: change(msg.content) } : msg
++        )
++      );
++
++    try {
++      const response = await fetch("/api/web-gemma", {
++        method: "POST",
++        headers: { "Content-Type": "application/json" },
++        body: JSON.stringify({ question }),
++      });
++
++      if (!response.ok || !response.body) {
++        throw new Error("Klarte ikke å kontakte serveren.");
++      }
++
++      const reader = response.body.getReader();
++      const decoder = new TextDecoder();
++      let buffer = "";
++
++      while (true) {
++        const { value, done } = await reader.read();
++        if (done) break;
++
++        buffer += decoder.decode(value, { stream: true });
++
++        const lines = buffer.split("\n");
++        buffer = lines.pop() || "";
++
++        for (const line of lines) {
++          if (!line.trim()) continue;
++
++          const event = JSON.parse(line);
++
++          if (event.type === "token") {
++            update((content) => content + event.token);
++          }
++
++          if (event.type === "error") {
++            update(() => `Feil: ${event.error}`);
++          }
++        }
++      }
++    } catch (err: any) {
++      update(() => `Feil: ${err.message || "Klarte ikke å svare."}`);
++    } finally {
++      setLoading(false);
++    }
++  }
++
++  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
++    if (e.key === "Enter" && !e.shiftKey) {
++      e.preventDefault();
++      sendMessage();
++    }
++  }
++
++  return (
++    <main className="relative min-h-screen bg-neutral-100 text-neutral-900">
++      {/* Soft colour behind everything, so the glass below has something to blur. */}
++      <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
++        <div className="absolute -left-24 top-8 h-80 w-80 rounded-full bg-sky-200/60 blur-3xl" />
++        <div className="absolute -right-24 top-1/3 h-96 w-96 rounded-full bg-violet-200/50 blur-3xl" />
++        <div className="absolute bottom-0 left-1/4 h-80 w-80 rounded-full bg-rose-200/50 blur-3xl" />
++      </div>
++
++      <div className="relative mx-auto flex min-h-screen w-full max-w-3xl flex-col px-4">
++        <section className="flex-1 space-y-8 pb-44 pt-10">
++          {messages.length === 0 && (
++            <div className="flex h-[55vh] items-center justify-center text-center">
++              <p className="text-xl font-medium tracking-tight text-neutral-400">
++                Hva kan jeg hjelpe med?
++              </p>
++            </div>
++          )}
++
++          {messages.map((msg, index) => {
++            if (msg.role === "user") {
++              return (
++                <article key={index} className="flex justify-end">
++                  <div className="max-w-[88%] rounded-2xl bg-neutral-200/80 px-4 py-3 text-[15px] leading-7">
++                    <div className="whitespace-pre-wrap">{msg.content}</div>
++                  </div>
++                </article>
++              );
++            }
++
++            const streaming = loading && index === messages.length - 1;
++
++            return (
++              <article key={index}>
++                <div className="prose prose-neutral max-w-none text-[16px] leading-8 prose-headings:font-semibold prose-headings:tracking-tight prose-p:my-3 prose-li:my-1 prose-strong:font-semibold">
++                  <MemoizedReactMarkdown
++                    remarkPlugins={[remarkGfm]}
++                    components={markdownComponents}
++                  >
++                    {msg.content}
++                  </MemoizedReactMarkdown>
++                </div>
++
++                {streaming && msg.content !== "" && (
++                  <span className="inline-block h-4 w-2 animate-pulse rounded-sm bg-neutral-900 align-middle" />
++                )}
++
++                {streaming && msg.content === "" && (
++                  <div className="text-sm text-neutral-500">Starter svar...</div>
++                )}
++              </article>
++            );
++          })}
++
++          <div ref={bottomRef} />
++        </section>
++      </div>
++
++      <footer className="pointer-events-none fixed inset-x-0 bottom-0 z-20 bg-gradient-to-t from-neutral-100 via-neutral-100/70 to-transparent px-4 pb-4 pt-12">
++        <div className="pointer-events-auto mx-auto w-full max-w-3xl">
++          {/* The glass: translucent white, a strong blur of whatever scrolls underneath, and a hairline edge. */}
++          <div className="flex items-end gap-2 rounded-2xl border border-white/70 bg-white/45 p-2 shadow-[0_10px_40px_rgba(15,23,42,0.10)] ring-1 ring-black/5 backdrop-blur-2xl backdrop-saturate-150 transition focus-within:bg-white/65 focus-within:ring-black/10">
++            <textarea
++              ref={textareaRef}
++              value={input}
++              onChange={(e) => setInput(e.target.value)}
++              onKeyDown={handleKeyDown}
++              rows={1}
++              aria-label="Skriv et spørsmål"
++              className="max-h-40 min-h-[44px] flex-1 resize-none bg-transparent px-3 py-2.5 text-base text-neutral-900 outline-none focus:outline-none focus-visible:outline-none placeholder:text-neutral-500/70"
++              placeholder="Spør om noe..."
++            />
++
++            <button
++              onClick={sendMessage}
++              disabled={loading || !input.trim()}
++              aria-label="Send"
++              className="grid h-11 w-11 flex-none place-items-center rounded-xl bg-neutral-900 text-white shadow-sm transition hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-30"
++            >
++              <svg
++                viewBox="0 0 24 24"
++                className="h-5 w-5"
++                fill="none"
++                stroke="currentColor"
++                strokeWidth="2.2"
++                strokeLinecap="round"
++                strokeLinejoin="round"
++                aria-hidden="true"
++              >
++                <path d="M12 19V5" />
++                <path d="M5 12l7-7 7 7" />
++              </svg>
++            </button>
++          </div>
++
++          <div className="mt-2 flex items-center justify-center gap-2 text-xs text-neutral-500">
++            <span>Enter sender · Shift + Enter ny linje</span>
++            <span aria-hidden="true">·</span>
++            <form method="post" action="/logout">
++              <button
++                type="submit"
++                className="underline-offset-4 transition hover:text-neutral-900 hover:underline"
++              >
++                Logg ut
++              </button>
++            </form>
++          </div>
++        </div>
++      </footer>
++    </main>
++  );
++}

@@ -1,0 +1,28 @@
+#!/bin/bash
+# Installed as /opt/apps/bin/deploy-hitster by harden.sh. Run as root (sudo).
+# Takes the code that scripts/deploy.sh uploaded to ~trashcan/deploy/hitster, installs it into the
+# locked-down app folder, builds it AS the service account, and restarts the two daemons.
+set -euo pipefail
+SRC=/Users/trashcan/deploy/hitster
+D=/opt/apps/hitster
+U=_svc_hitster
+NODE=/opt/node
+
+[ "$(id -u)" = 0 ] || { echo "run with sudo" >&2; exit 1; }
+[ -d "$SRC/web" ] && [ -d "$SRC/server" ] || { echo "nothing staged in $SRC" >&2; exit 1; }
+
+# --safe-links: never follow or copy a symlink that points outside the staged tree.
+# Excluded paths (dependencies, build output, secrets) are kept as they are.
+rsync -rlpt --safe-links --delete --exclude node_modules --exclude .next --exclude .env.local "$SRC/web/"    "$D/web/"
+rsync -rlpt --safe-links --delete --exclude node_modules                                      "$SRC/server/" "$D/server/"
+chown -R "$U:$U" "$D"
+chmod -R go-rwx "$D"
+
+sudo -u "$U" env HOME="$D" PATH="$NODE/bin:/usr/bin:/bin" bash -c "
+  set -e
+  cd '$D/web'    && npm ci --silent && npx next build >/dev/null
+  cd '$D/server' && npm install --omit=dev --silent
+"
+launchctl kickstart -k system/com.eliastrana.svc.hitster
+launchctl kickstart -k system/com.eliastrana.svc.hitster-web
+echo "hitster deployed"

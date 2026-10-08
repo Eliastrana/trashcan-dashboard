@@ -1,0 +1,53 @@
+#!/bin/sh
+# Installed as /opt/apps/bin/svc-control (root-owned). The status page's account may run exactly this, through sudo,
+# for the exact id/action pairs listed in /etc/sudoers.d/status-control, and nothing else. It trusts nothing it is
+# given: both arguments are checked against the lists below before anything is touched, and no argument is ever
+# used to build a command line or a file path.
+#
+#   svc-control <id> <stop|start|restart>
+PATH=/usr/bin:/bin:/usr/sbin:/sbin
+[ $# -eq 2 ] || { echo "usage: svc-control <id> <stop|start|restart>" >&2; exit 64; }
+id=$1; action=$2
+
+case $id in
+  caddy)     label=com.eliastrana.svc.caddy;        allowed="restart" ;;               # stopping it would also take the status page offline
+  arena)     label=com.eliastrana.svc.arena;        allowed="stop start restart" ;;
+  hitweb)    label=com.eliastrana.svc.hitster-web;  allowed="stop start restart" ;;
+  hitws)     label=com.eliastrana.svc.hitster;      allowed="stop start restart" ;;
+  mcpack)    label=com.eliastrana.svc.mcpack;       allowed="stop start restart" ;;
+  minecraft) label=com.eliastrana.svc.minecraft;    allowed="stop start restart" ;;
+  *) echo "unknown service" >&2; exit 64 ;;
+esac
+case " $allowed " in *" $action "*) ;; *) echo "action not allowed for $id" >&2; exit 64 ;; esac
+
+plist=/Library/LaunchDaemons/$label.plist
+loaded() { launchctl print "system/$label" >/dev/null 2>&1; }
+
+# macOS keeps a port blocked while old connections linger half-closed; a game server restarted too soon crashes on bind.
+wait_port_clear() {
+  waited=0
+  while [ "$(netstat -anp tcp | awk -v p=".$1" '$4 ~ (p "$") && $6 != "TIME_WAIT" {c++} END {print c+0}')" != 0 ]; do
+    [ $waited -ge 360 ] && break
+    sleep 5; waited=$((waited + 5))
+  done
+}
+
+case $action in
+  stop)
+    loaded && launchctl bootout "system/$label"             # SIGTERM, then waits for the service to save and exit
+    echo "$id stopped" ;;
+  start)
+    if loaded; then launchctl kickstart "system/$label"; else launchctl bootstrap system "$plist"; fi
+    echo "$id started" ;;
+  restart)
+    if [ "$id" = minecraft ]; then
+      loaded && launchctl bootout "system/$label"
+      wait_port_clear 25565
+      launchctl bootstrap system "$plist"
+    elif loaded; then
+      launchctl kill SIGTERM "system/$label"                # clean exit; launchd starts it again by itself
+    else
+      launchctl bootstrap system "$plist"
+    fi
+    echo "$id restarted" ;;
+esac
