@@ -39,7 +39,7 @@ const SERVICES = [
   { id: 'llmgate', icon: 'lock',   name: 'Login for llm.eliastrana.no', group: 'Backends', ...local(3040, '/login'), link: '127.0.0.1:3040' },
   { id: 'bluemap', icon: 'minecraft',   name: 'BlueMap',                   group: 'Backends', ...local(8100), link: '127.0.0.1:8100' },
   { id: 'minecraft', icon: 'minecraft', name: 'Minecraft server',          group: 'Games',    kind: 'tcp', port: 25565, link: 'eliastrana.tplinkdns.com:25565' },
-  { id: 'ssh', icon: 'ssh',       name: 'SSH portfolio',             group: 'Games',    kind: 'banner', port: 2222, expect: 'SSH-', link: 'ssh portfolio.eliastrana.no' },
+  { id: 'ssh', icon: 'ssh',       name: 'SSH portfolio',             group: 'Other',    kind: 'banner', port: 2222, expect: 'SSH-', link: 'ssh portfolio.eliastrana.no' },
   { id: 'plex', icon: 'plex',      name: 'Plex',                      group: 'Other',    ...local(32400, '/identity'), link: 'http://192.168.0.138:32400/web' },
   { id: 'ollama', icon: 'ollama',    name: 'Ollama',                    group: 'Other',    ...local(11434), link: 'https://llm.eliastrana.no/ollama/ (api)' },
 ];

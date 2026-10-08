@@ -6,7 +6,7 @@
   :root { --bg: #161512; --ink: #e8e4d9; --muted: #8f897b; --rule: #343129; --tick: #26241e; --ok: #86c391; --warn: #dca84a; --bad: #f0806f; }
 }
 * { box-sizing: border-box; }
-html { background: var(--bg); }
+html { background: var(--bg); overflow-x: hidden; overscroll-behavior-x: none; }
 body { margin: 0; color: var(--ink); background: var(--bg); font: 15px/1.5 -apple-system, "Helvetica Neue", Arial, sans-serif; }
 main { max-width: 52rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
 .num, td.num, dd { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
@@ -79,8 +79,8 @@ td.ctl button.icon:focus-visible { outline: 2px solid var(--ink); outline-offset
 .working { color: var(--muted); font-style: italic; font-size: 0.85rem; }
 
 /* login */
-body.center { display: grid; place-items: center; min-height: 100dvh; }
-.login { width: min(19rem, calc(100% - 2.5rem)); }
+body.center { display: grid; grid-template-columns: minmax(0, 1fr); place-items: center; min-height: 100dvh; overflow-x: hidden; }
+.login { width: 19rem; max-width: calc(100vw - 2.5rem); }
 .login h1 { border-bottom: 2px solid var(--ink); padding-bottom: 0.4rem; margin-bottom: 1rem; }
 .login label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.2rem; }
 .login input { width: 100%; font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--ink); border-radius: 0; padding: 0.4rem 0.5rem; }
