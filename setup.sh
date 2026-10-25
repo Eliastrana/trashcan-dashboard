@@ -253,7 +253,7 @@ step_librespot() {
     say "librespot $LIBRESPOT_VERSION is already built"
   else
     say "building librespot $LIBRESPOT_VERSION as $ADMIN_USER (Rust, about 5 minutes the first time; macOS has no prebuilt binary)"
-    tmp=$(mktemp -d); run chown "$ADMIN_USER" "$tmp"
+    tmp=$(mktemp -d /private/tmp/librespot.XXXXXX); run chown "$ADMIN_USER" "$tmp"   # not root's private $TMPDIR: the admin user must reach it
     run sudo -u "$ADMIN_USER" -H sh -c "[ -x \"\$HOME/.cargo/bin/cargo\" ] || { curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --no-modify-path; }; \"\$HOME/.cargo/bin/cargo\" install librespot --version $LIBRESPOT_VERSION --locked --root '$tmp'"
     run install -m 755 -o root -g wheel "$tmp/bin/librespot" "$bin"
     rm -rf "$tmp"
