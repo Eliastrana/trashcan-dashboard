@@ -11,6 +11,7 @@
 #   chatbot    the chat page                       (code: chatbot-ollama + our patch)
 #   hitster    Ikke-Hitster, web and game server   (code: GitHub,                    keys: backup)
 #   arena      arcade.eliastrana.no                (code: GitHub)
+#   librespot  Spotify Connect speaker ("Trashcan")     (code: built from source with Rust, needs Spotify Premium)
 #   mcpack     Minecraft resource packs            (code and data: backup)
 #   minecraft  the Minecraft server (+ BlueMap)    (Java: downloaded,                world: backup)
 #   caddy      the web front door, last            (binary: downloaded, Caddyfile: this repo, certificates: backup)
@@ -28,7 +29,7 @@ APPS=/opt/apps
 NODE=/opt/node
 LABEL_PREFIX=com.eliastrana.svc
 DRY=0; YES=0; ALLOW_DEPLOY=0; BACKUP=; LAST_LOG=; LAST_LABEL=
-ALL=(base status llmgate chatbot hitster arena mcpack minecraft caddy)
+ALL=(base status llmgate chatbot hitster arena librespot mcpack minecraft caddy)
 
 # shellcheck source=lib/common.sh
 . "$HERE/lib/common.sh"
@@ -242,6 +243,29 @@ step_arena() {
   daemon_up "$(label_of $a)"
   wait_for "arena (port 3001)" http_ok http://127.0.0.1:3001/ || die "arena did not start"
   rm -rf "$tmp"
+}
+
+step_librespot() {
+  local a=librespot d bin tmp; d=$(dir_of librespot); bin=$d/librespot
+  create_account $a
+  run mkdir -p "$d/cache" "$d/logs"
+  if [ -x "$bin" ] && [ "$("$bin" --version 2>/dev/null | awk '{print $2}')" = "$LIBRESPOT_VERSION" ]; then
+    say "librespot $LIBRESPOT_VERSION is already built"
+  else
+    say "building librespot $LIBRESPOT_VERSION as $ADMIN_USER (Rust, about 5 minutes the first time; macOS has no prebuilt binary)"
+    tmp=$(mktemp -d); run chown "$ADMIN_USER" "$tmp"
+    run sudo -u "$ADMIN_USER" -H sh -c "[ -x \"\$HOME/.cargo/bin/cargo\" ] || { curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --no-modify-path; }; \"\$HOME/.cargo/bin/cargo\" install librespot --version $LIBRESPOT_VERSION --locked --root '$tmp'"
+    run install -m 755 -o root -g wheel "$tmp/bin/librespot" "$bin"
+    rm -rf "$tmp"
+  fi
+  lock_dir $a
+  run chown root:wheel "$bin"; run chmod 755 "$bin"
+  # The first time, pick "$LIBRESPOT_NAME" in the Spotify app's device list (it is found over the local network);
+  # the login is then kept in $d/cache and the speaker is available whenever the Mac is on.
+  ENVV=(HOME="$d"); ARGV=("$bin" --name "$LIBRESPOT_NAME" --backend rodio --bitrate 320 --initial-volume 70 --cache "$d/cache" --system-cache "$d/cache" --device-type speaker --disable-audio-cache)
+  plist "$(label_of $a)" $a "$d" "$d/logs/librespot.log"
+  daemon_up "$(label_of $a)"
+  say "librespot is running; open Spotify on any device and choose \"$LIBRESPOT_NAME\" (needs Premium). log: $d/logs/librespot.log"
 }
 
 step_mcpack() {
