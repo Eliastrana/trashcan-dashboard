@@ -304,6 +304,7 @@ GUEST_FIRST_PORT=$GUEST_FIRST_PORT
 GUEST_MAX=$GUEST_MAX
 EOF
   run install -m 755 -o root -g wheel "$HERE/bin/guest" "$APPS/bin/guest"
+  run install -m 644 -o root -g wheel "$HERE/bin/guest-art.txt" "$g/art.txt"
   [ -f "$g/ports" ] || run install -m 644 -o root -g wheel /dev/null "$g/ports"
 
   say "firewall: every guest VM is fenced in with pf (no Mac, no LAN, no private addresses; the internet stays open)"
