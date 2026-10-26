@@ -9,6 +9,7 @@
 #
 # One VM per guest, each run by its own hidden macOS account, so pf can fence every VM in by its owner.
 set -euo pipefail
+cd /                                    # the VM accounts cannot see the folder sudo was started from
 PATH=/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin
 APPS=/opt/apps; G=$APPS/guests; DRY=0; LABEL_PREFIX=com.eliastrana.svc
 # shellcheck source=/dev/null
