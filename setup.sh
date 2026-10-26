@@ -307,7 +307,7 @@ EOF
   [ -f "$g/ports" ] || run install -m 644 -o root -g wheel /dev/null "$g/ports"
 
   say "firewall: every guest VM is fenced in with pf (no Mac, no LAN, no private addresses; the internet stays open)"
-  [ -f /etc/pf.anchors/guests ] || put_file 644 /etc/pf.anchors/guests </dev/null
+  [ -f /etc/pf.anchors/guests ] || printf "" | put_file 644 /etc/pf.anchors/guests
   if [ "$DRY" = 1 ]; then echo "   + add the guests anchor and its load line to /etc/pf.conf (a copy is kept as /etc/pf.conf.before-guests)"; else
     grep -q 'anchor "guests"' /etc/pf.conf || {
       cp -n /etc/pf.conf /etc/pf.conf.before-guests
