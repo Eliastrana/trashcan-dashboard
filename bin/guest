@@ -5,6 +5,7 @@
 #   sudo guest add <name> [--sudo]    create the VM and the login <name> (asks for the password; --sudo = root inside the VM)
 #   sudo guest remove <name>          stop and delete the VM and its files
 #   sudo guest restart <name>
+#   sudo guest firewall               rewrite and reload the firewall rules
 #   guest list
 #
 # One VM per guest, each run by its own hidden macOS account, so pf can fence every VM in by its owner.
@@ -24,6 +25,9 @@ vbm() { sudo -u "$(user_of "g_$name")" env HOME="$G/$name" VBOX_USER_HOME="$G/$n
 write_pf() {
   local rules="" n port
   rules+="# written by guest: do not edit"$'\n'
+  # pf cannot tell whose ping it is (the owner match only works for TCP and UDP), so while guests exist this Mac
+  # sends no echo requests to private addresses at all. Otherwise a guest could ping-sweep the home network.
+  [ -s "$G/ports" ] && rules+="block drop out quick proto icmp from any to { 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 169.254.0.0/16 100.64.0.0/10 } icmp-type echoreq"$'\n'
   while read -r n port; do
     [ -n "${n:-}" ] || continue
     rules+="pass in quick proto tcp from any to any port $port flags S/SA keep state"$'\n'
@@ -37,9 +41,10 @@ write_pf() {
 cmd=${1:-}; name=${2:-}
 case $cmd in
   list) cat "$G/ports" 2>/dev/null || true; exit 0 ;;
-  add|remove|restart) [ "$(id -u)" = 0 ] || die "run with sudo" ;;
+  add|remove|restart|firewall) [ "$(id -u)" = 0 ] || die "run with sudo" ;;
   *) sed -n 2,11p "$0"; exit 64 ;;
 esac
+[ "$cmd" = firewall ] && { write_pf; say "firewall reloaded"; exit 0; }
 [[ $name =~ ^[a-z][a-z0-9]{1,15}$ ]] || die "the name must be 2-16 lowercase letters and digits, starting with a letter"
 label=$(label_of "g_$name"); touch "$G/ports"
 
