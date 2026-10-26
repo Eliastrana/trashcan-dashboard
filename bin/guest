@@ -1,0 +1,124 @@
+#!/bin/bash
+# Installed as /opt/apps/bin/guest (root-owned). Gives a friend an SSH login to their own small Linux VM:
+# their own CPU/RAM/disk share, no access to this Mac, its other services or the home network.
+#
+#   sudo guest add <name> [--sudo]    create the VM and the login <name> (asks for the password; --sudo = root inside the VM)
+#   sudo guest remove <name>          stop and delete the VM and its files
+#   sudo guest restart <name>
+#   guest list
+#
+# One VM per guest, each run by its own hidden macOS account, so pf can fence every VM in by its owner.
+set -euo pipefail
+PATH=/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin
+APPS=/opt/apps; G=$APPS/guests; DRY=0; LABEL_PREFIX=com.eliastrana.svc
+# shellcheck source=/dev/null
+. "$G/guest.conf"; . "$G/common.sh"
+dir_of() { echo "$G/${1#g_}"; }
+VBM=/usr/local/bin/VBoxManage; VBH=/Applications/VirtualBox.app/Contents/MacOS/VBoxHeadless
+
+vbm() { sudo -u "$(user_of "g_$name")" env HOME="$G/$name" VBOX_USER_HOME="$G/$name/.vbox" "$VBM" "$@"; }
+
+# Rewritten from the list of guests every time: each VM's owner may not reach this Mac, the LAN or any private
+# address (that is what stops a guest from poking at your other services), nor send mail. Only the internet is open.
+write_pf() {
+  local rules="" n port
+  rules+="# written by guest: do not edit"$'\n'
+  while read -r n port; do
+    [ -n "${n:-}" ] || continue
+    rules+="pass in quick proto tcp from any to any port $port flags S/SA keep state"$'\n'
+    rules+="block drop out quick from any to { 127.0.0.0/8 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 169.254.0.0/16 100.64.0.0/10 224.0.0.0/4 } user $(user_of "g_$n")"$'\n'
+    rules+="block drop out quick proto tcp from any to any port { 25 465 587 } user $(user_of "g_$n")"$'\n'
+  done < "$G/ports"
+  printf '%s' "$rules" > /etc/pf.anchors/guests
+  pfctl -q -a guests -f /etc/pf.anchors/guests
+}
+
+cmd=${1:-}; name=${2:-}
+case $cmd in
+  list) cat "$G/ports" 2>/dev/null || true; exit 0 ;;
+  add|remove|restart) [ "$(id -u)" = 0 ] || die "run with sudo" ;;
+  *) sed -n 2,11p "$0"; exit 64 ;;
+esac
+[[ $name =~ ^[a-z][a-z0-9]{1,15}$ ]] || die "the name must be 2-16 lowercase letters and digits, starting with a letter"
+label=$(label_of "g_$name"); touch "$G/ports"
+
+case $cmd in
+add)
+  grep -q "^$name " "$G/ports" && die "$name already exists"
+  [ "$(wc -l < "$G/ports")" -lt "$GUEST_MAX" ] || die "already $GUEST_MAX guests (GUEST_MAX in config/versions.conf)"
+  port=$GUEST_FIRST_PORT; while grep -q " $port\$" "$G/ports"; do port=$((port + 1)); done
+  read -r -s -p "Password for $name (min 12 characters): " pw; echo
+  [ "${#pw}" -ge 12 ] || die "too short"
+  case $pw in *[\"\\\'$\`:]*) die "leave out the characters  \" ' \\ \$ \` :  (they break the setup file)";; esac
+  d=$G/$name; say "creating the account and folder for $name"
+  create_account "g_$name"; mkdir -p "$d/seed"; sudoers=
+  [ "${3:-}" = --sudo ] && sudoers='    sudo: ALL=(ALL) NOPASSWD:ALL'
+  cat > "$d/seed/user-data" <<EOT
+#cloud-config
+hostname: $name
+users:
+  - name: $name
+    shell: /bin/bash
+    lock_passwd: false
+$sudoers
+chpasswd:
+  expire: false
+  users:
+    - {name: $name, password: "$pw", type: text}
+ssh_pwauth: true
+disable_root: true
+package_update: true
+packages: [fail2ban, unattended-upgrades]
+write_files:
+  - path: /etc/ssh/sshd_config.d/10-guest.conf
+    content: |
+      PermitRootLogin no
+      AllowUsers $name
+      MaxAuthTries 3
+      LoginGraceTime 20
+runcmd:
+  - [systemctl, enable, --now, fail2ban]
+  - [systemctl, restart, ssh]
+EOT
+  printf 'instance-id: %s-%s\nlocal-hostname: %s\n' "$name" "$(date +%s)" "$name" > "$d/seed/meta-data"
+  hdiutil makehybrid -quiet -iso -joliet -default-volume-name cidata -o "$d/seed.iso" "$d/seed"; rm -rf "$d/seed"
+  chown -R "$(user_of "g_$name"):$(user_of "g_$name")" "$d"; chmod 700 "$d"
+  echo "$name $port" >> "$G/ports"
+
+  say "building the VM: $GUEST_CPUS cores, $GUEST_RAM MB RAM, $GUEST_DISK MB disk"
+  vbm createvm --name "$name" --ostype Ubuntu_64 --register --basefolder "$d" >/dev/null
+  vbm modifyvm "$name" --memory "$GUEST_RAM" --cpus "$GUEST_CPUS" --ioapic on --paravirt-provider kvm \
+     --nic1 nat --nic-type1 virtio --nat-pf1 "ssh,tcp,,$port,,22" --audio-enabled off \
+     --clipboard-mode disabled --drag-and-drop disabled --graphicscontroller vmsvga --vram 16 \
+     --boot1 disk --boot2 dvd --boot3 none --boot4 none
+  vbm storagectl "$name" --name SATA --add sata >/dev/null
+  vbm clonemedium disk "$G/base.vmdk" "$d/$name.vdi" --format VDI >/dev/null
+  vbm modifymedium disk "$d/$name.vdi" --resize "$GUEST_DISK" >/dev/null
+  vbm storageattach "$name" --storagectl SATA --port 0 --device 0 --type hdd --medium "$d/$name.vdi"
+  vbm storageattach "$name" --storagectl SATA --port 1 --device 0 --type dvddrive --medium "$d/seed.iso"
+
+  ENVV=(HOME="$d" VBOX_USER_HOME="$d/.vbox"); ARGV=("$VBH" --startvm "$name" --vrde off)
+  PLIST_EXTRA='<key>ExitTimeOut</key><integer>60</integer>'
+  plist "$label" "g_$name" "$d" "$d/vm.log"; PLIST_EXTRA=
+  write_pf; daemon_up "$label"
+  say "first boot (installs updates, about 3 minutes) ..."
+  for _ in $(seq 1 90); do nc -z -w 2 127.0.0.1 "$port" && sleep 2 && break; sleep 5; done
+  sleep 90
+  vbm storageattach "$name" --storagectl SATA --port 1 --device 0 --medium emptydrive 2>/dev/null || true
+  rm -f "$d/seed.iso"                                    # the password was only needed for the first boot
+  say "done. $name logs in with:  ssh -p $port $name@<this Mac's address>     (forward TCP $port on the router to this Mac)"
+  ;;
+remove)
+  grep -q "^$name " "$G/ports" || die "no guest called $name"
+  launchctl bootout "system/$label" 2>/dev/null || true
+  rm -f "/Library/LaunchDaemons/$label.plist"
+  grep -v "^$name " "$G/ports" > "$G/ports.new" || true; mv "$G/ports.new" "$G/ports"
+  write_pf
+  rm -rf "$G/$name"
+  dscl . -delete "/Users/$(user_of "g_$name")" 2>/dev/null || true; dscl . -delete "/Groups/$(user_of "g_$name")" 2>/dev/null || true
+  say "$name is gone (VM, disk and account); remember to remove the router's port forward"
+  ;;
+restart)
+  launchctl kickstart -k "system/$label"
+  ;;
+esac

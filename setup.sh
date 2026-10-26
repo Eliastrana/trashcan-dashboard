@@ -12,6 +12,7 @@
 #   hitster    Ikke-Hitster, web and game server   (code: GitHub,                    keys: backup)
 #   arena      arcade.eliastrana.no                (code: GitHub)
 #   librespot  Spotify Connect speaker ("Trashcan")     (code: built from source with Rust, needs Spotify Premium)
+#   guests     SSH logins into small private Linux VMs for friends   (VirtualBox; add them with: sudo /opt/apps/bin/guest add <name>)
 #   mcpack     Minecraft resource packs            (code and data: backup)
 #   minecraft  the Minecraft server (+ BlueMap)    (Java: downloaded,                world: backup)
 #   caddy      the web front door, last            (binary: downloaded, Caddyfile: this repo, certificates: backup)
@@ -29,7 +30,7 @@ APPS=/opt/apps
 NODE=/opt/node
 LABEL_PREFIX=com.eliastrana.svc
 DRY=0; YES=0; ALLOW_DEPLOY=0; BACKUP=; LAST_LOG=; LAST_LABEL=
-ALL=(base status llmgate chatbot hitster arena librespot mcpack minecraft caddy)
+ALL=(base status llmgate chatbot hitster arena librespot guests mcpack minecraft caddy)
 
 # shellcheck source=lib/common.sh
 . "$HERE/lib/common.sh"
@@ -266,6 +267,69 @@ step_librespot() {
   plist "$(label_of $a)" $a "$d" "$d/logs/librespot.log"
   daemon_up "$(label_of $a)"
   say "librespot is running; open Spotify on any device and choose \"$LIBRESPOT_NAME\" (needs Premium). log: $d/logs/librespot.log"
+}
+
+step_guests() {
+  local g=$APPS/guests tmp mnt dmg="VirtualBox-$VBOX_VERSION-$VBOX_BUILD-OSX.dmg" base="https://download.virtualbox.org/virtualbox/$VBOX_VERSION"
+  if [ ! -x /usr/local/bin/VBoxManage ]; then
+    say "installing VirtualBox $VBOX_VERSION (Intel Mac, macOS 12)"
+    tmp=$(mktemp -d /private/tmp/vbox.XXXXXX)
+    download "$base/$dmg" "$tmp/$dmg"
+    if [ "$DRY" = 1 ]; then echo "   + check the checksum against $base/SHA256SUMS"; else
+      check_sha "$tmp/$dmg" "$(curl -fsSL "$base/SHA256SUMS" | awk -v f="*$dmg" '$2 == f {print $1}')"
+    fi
+    mnt=$tmp/mnt; run mkdir "$mnt"
+    run hdiutil attach -quiet -nobrowse -mountpoint "$mnt" "$tmp/$dmg"
+    run installer -pkg "$mnt/VirtualBox.pkg" -target /
+    run hdiutil detach -quiet "$mnt"
+    rm -rf "$tmp"
+    warn "VirtualBox needs a one-time approval: System Settings > Privacy & Security > allow software from Oracle, then restart the Mac (use Screen Sharing if you are away). Until then no guest can start."
+  fi
+  run mkdir -p "$g"; run chown root:wheel "$g"; run chmod 755 "$g"
+  if [ ! -f "$g/base.vmdk" ]; then
+    say "downloading the Ubuntu cloud image (the starting point of every guest VM)"
+    tmp=$(mktemp -d /private/tmp/guestimg.XXXXXX)
+    download "$GUEST_IMAGE_URL" "$tmp/base.vmdk"
+    check_sha "$tmp/base.vmdk" "$GUEST_IMAGE_SHA256"
+    run install -m 644 -o root -g wheel "$tmp/base.vmdk" "$g/base.vmdk"
+    rm -rf "$tmp"
+  fi
+  say "the guest command, and the settings it uses"
+  run install -m 644 -o root -g wheel "$HERE/lib/common.sh" "$g/common.sh"
+  put_file 644 "$g/guest.conf" <<EOF
+GUEST_CPUS=$GUEST_CPUS
+GUEST_RAM=$GUEST_RAM
+GUEST_DISK=$GUEST_DISK
+GUEST_FIRST_PORT=$GUEST_FIRST_PORT
+GUEST_MAX=$GUEST_MAX
+EOF
+  run install -m 755 -o root -g wheel "$HERE/bin/guest" "$APPS/bin/guest"
+  [ -f "$g/ports" ] || run install -m 644 -o root -g wheel /dev/null "$g/ports"
+
+  say "firewall: every guest VM is fenced in with pf (no Mac, no LAN, no private addresses; the internet stays open)"
+  [ -f /etc/pf.anchors/guests ] || put_file 644 /etc/pf.anchors/guests </dev/null
+  if [ "$DRY" = 1 ]; then echo "   + add the guests anchor and its load line to /etc/pf.conf (a copy is kept as /etc/pf.conf.before-guests)"; else
+    grep -q 'anchor "guests"' /etc/pf.conf || {
+      cp -n /etc/pf.conf /etc/pf.conf.before-guests
+      printf 'anchor "guests"\nload anchor "guests" from "/etc/pf.anchors/guests"\n' >> /etc/pf.conf
+    }
+    pfctl -nf /etc/pf.conf || die "/etc/pf.conf does not parse; restore /etc/pf.conf.before-guests"
+  fi
+  put_file 644 /Library/LaunchDaemons/com.eliastrana.guests-pf.plist <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.eliastrana.guests-pf</string>
+  <key>ProgramArguments</key><array><string>/sbin/pfctl</string><string>-E</string><string>-f</string><string>/etc/pf.conf</string></array>
+  <key>RunAtLoad</key><true/>
+</dict></plist>
+EOF
+  if [ "$DRY" != 1 ]; then
+    pfctl -E -f /etc/pf.conf 2>/dev/null || true
+    launchctl bootout system/com.eliastrana.guests-pf 2>/dev/null || true
+    launchctl bootstrap system /Library/LaunchDaemons/com.eliastrana.guests-pf.plist
+  fi
+  say "ready. Add a friend:  sudo $APPS/bin/guest add <name>   (then forward the TCP port it prints on the router)"
 }
 
 step_mcpack() {
