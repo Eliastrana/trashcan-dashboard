@@ -15,7 +15,7 @@ APPS=/opt/apps; G=$APPS/guests; DRY=0; LABEL_PREFIX=com.eliastrana.svc
 # shellcheck source=/dev/null
 . "$G/guest.conf"; . "$G/common.sh"
 dir_of() { echo "$G/${1#g_}"; }
-VBM=/usr/local/bin/VBoxManage; VBH=/Applications/VirtualBox.app/Contents/MacOS/VBoxHeadless
+VBM=/usr/local/bin/VBoxManage; VBH=/usr/local/bin/VBoxHeadless
 
 vbm() { sudo -u "$(user_of "g_$name")" env HOME="$G/$name" VBOX_USER_HOME="$G/$name/.vbox" "$VBM" "$@"; }
 
@@ -102,6 +102,8 @@ EOT
   PLIST_EXTRA='<key>ExitTimeOut</key><integer>60</integer>'
   plist "$label" "g_$name" "$d" "$d/vm.log"; PLIST_EXTRA=
   write_pf; daemon_up "$label"
+  sleep 15
+  pgrep -u "$(user_of "g_$name")" -f VBoxHeadless >/dev/null || die "the VM did not start; see $d/vm.log and: launchctl print system/$label"
   say "first boot (installs updates, about 3 minutes) ..."
   for _ in $(seq 1 90); do nc -z -w 2 127.0.0.1 "$port" && sleep 2 && break; sleep 5; done
   sleep 90
