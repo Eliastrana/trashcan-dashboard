@@ -85,14 +85,16 @@ write_files:
     content: |
       #!/bin/sh
       cat /etc/trashcan-art.txt
-      printf '\n   welcome, %s. this machine is yours, and only yours.\n\n' "\$(id -un)"
+      printf '\n   welcome, %s. this machine is yours, and only yours.\n\n' "\${PAM_USER:-\$(id -un)}"
   - path: /etc/ssh/sshd_config.d/10-guest.conf
     content: |
       PermitRootLogin no
       AllowUsers $name
       MaxAuthTries 3
+      PrintLastLog no
       LoginGraceTime 20
 runcmd:
+  - ['sh', '-c', 'for f in /etc/update-motd.d/*; do [ "\$f" = /etc/update-motd.d/00-trashcan ] || chmod -x "\$f"; done']
   - [systemctl, enable, --now, fail2ban]
   - [systemctl, restart, ssh]
 EOT
