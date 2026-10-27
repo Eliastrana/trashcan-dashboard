@@ -57,12 +57,14 @@ add)
   [ "${#pw}" -ge 12 ] || die "too short"
   case $pw in *[\"\\\'$\`:]*) die "leave out the characters  \" ' \\ \$ \` :  (they break the setup file)";; esac
   d=$G/$name; say "creating the account and folder for $name"
-  art=$(base64 < "$G/art.txt" | tr -d '\n')
+  art=$(base64 < "$G/art.txt" | tr -d '\n'); motd=$(base64 < "$G/motd.sh" | tr -d '\n')
+  mem=$((GUEST_RAM - 600))              # what Slurm may hand out: the VM needs some of its RAM for itself
   create_account "g_$name"; mkdir -p "$d/seed"; sudoers=
   [ "${3:-}" = --sudo ] && sudoers='    sudo: ALL=(ALL) NOPASSWD:ALL'
   cat > "$d/seed/user-data" <<EOT
 #cloud-config
 hostname: $name
+manage_etc_hosts: true
 users:
   - name: $name
     shell: /bin/bash
@@ -75,16 +77,47 @@ chpasswd:
 ssh_pwauth: true
 disable_root: true
 package_update: true
-packages: [fail2ban, unattended-upgrades]
+packages: [fail2ban, unattended-upgrades, munge, slurm-wlm]
 write_files:
   - path: /etc/trashcan-art.txt
     encoding: b64
     content: $art
   - path: /etc/update-motd.d/00-trashcan
     permissions: '0755'
+    encoding: b64
+    content: $motd
+  - path: /etc/slurm/slurm.conf
     content: |
-      #!/bin/sh
-      cat /etc/trashcan-art.txt
+      ClusterName=lpc
+      SlurmctldHost=$name
+      MpiDefault=none
+      ProctrackType=proctrack/linuxproc
+      TaskPlugin=task/none
+      ReturnToService=2
+      SlurmUser=slurm
+      SlurmctldPidFile=/run/slurmctld.pid
+      SlurmdPidFile=/run/slurmd.pid
+      SlurmdSpoolDir=/var/lib/slurm/slurmd
+      StateSaveLocation=/var/lib/slurm/slurmctld
+      SlurmctldLogFile=/var/log/slurm/slurmctld.log
+      SlurmdLogFile=/var/log/slurm/slurmd.log
+      SchedulerType=sched/backfill
+      SelectType=select/cons_tres
+      SelectTypeParameters=CR_Core
+      AccountingStorageType=accounting_storage/none
+      JobCompType=jobcomp/none
+      NodeName=$name CPUs=$GUEST_CPUS Sockets=1 CoresPerSocket=$GUEST_CPUS ThreadsPerCore=1 RealMemory=$mem State=UNKNOWN
+      PartitionName=cpu Nodes=$name Default=YES MaxTime=INFINITE State=UP
+  - path: /etc/skel/example-job.sh
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      #SBATCH --job-name=hello
+      #SBATCH --cpus-per-task=1
+      #SBATCH --output=hello-%j.out
+      echo "running on \$(hostname) with \$SLURM_CPUS_ON_NODE cores"
+      sleep 10
+      echo "done"
   - path: /etc/ssh/sshd_config.d/10-guest.conf
     content: |
       PermitRootLogin no
@@ -95,6 +128,9 @@ write_files:
 runcmd:
   - ['sh', '-c', 'for f in /etc/update-motd.d/*; do [ "\$f" = /etc/update-motd.d/00-trashcan ] || chmod -x "\$f"; done']
   - [systemctl, enable, --now, fail2ban]
+  - [systemctl, enable, --now, munge]
+  - [systemctl, enable, --now, slurmctld]
+  - [systemctl, enable, --now, slurmd]
   - [systemctl, restart, ssh]
 EOT
   printf 'instance-id: %s-%s\nlocal-hostname: %s\n' "$name" "$(date +%s)" "$name" > "$d/seed/meta-data"
