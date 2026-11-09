@@ -255,11 +255,16 @@ step_arena() {
 
 step_jeopardy() {
   local a=jeopardy d tmp; d=$(dir_of jeopardy)
-  command -v git >/dev/null || die "git is missing (install the Xcode command line tools: xcode-select --install)"
   create_account $a
-  say "fetching Jeopardy ($JEOPARDY_GIT, branch $JEOPARDY_BRANCH)"
   tmp=$(mktemp -d)
-  run git clone -q --depth 1 --branch "$JEOPARDY_BRANCH" "$JEOPARDY_GIT" "$tmp/src"
+  if [ -d "$ADMIN_HOME/deploy/jeopardy" ]; then
+    # Code uploaded with rsync over ssh (no GitHub needed): ~/deploy/jeopardy, like Hitster's deploy folder.
+    say "using the uploaded code in $ADMIN_HOME/deploy/jeopardy"
+    run rsync -a --safe-links --exclude .git --exclude node_modules --exclude .next --exclude .env "$ADMIN_HOME/deploy/jeopardy/" "$tmp/src/"
+  else
+    say "fetching Jeopardy ($JEOPARDY_GIT, branch $JEOPARDY_BRANCH)"
+    run git clone -q --depth 1 --branch "$JEOPARDY_BRANCH" "$JEOPARDY_GIT" "$tmp/src"
+  fi
   sync_in "$tmp/src" "$d" --exclude .git --exclude node_modules --exclude .next --exclude .env
   run mkdir -p "$d/logs"
   restore_state $a || warn "no jeopardy.tar.gz in the backup: the monAI hint button stays off until $d/.env has OPENAI_API_KEY=... (the game itself works without it)"
