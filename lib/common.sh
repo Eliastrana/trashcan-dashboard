@@ -145,5 +145,7 @@ need_state() {      # need_state <app> <why>    a backup is mandatory for this a
 # Run a command as an app's account, with node on the path, inside its own folder.
 as_app() {   # as_app <app> <dir> <shell command>
   local app=$1 dir=$2; shift 2
-  run sudo -u "$(user_of "$app")" env HOME="$(dir_of "$app")" PATH="$NODE/bin:/usr/bin:/bin:/usr/sbin:/sbin" sh -c "cd '$dir' && $*"
+  # Start from / : the service account can not read the folder setup.sh was run from (somewhere in the admin's home),
+  # and a shell that starts in an unreadable folder fails before it gets to the cd.
+  ( cd / && run sudo -u "$(user_of "$app")" env HOME="$(dir_of "$app")" PATH="$NODE/bin:/usr/bin:/bin:/usr/sbin:/sbin" sh -c "cd '$dir' && $*" )
 }
