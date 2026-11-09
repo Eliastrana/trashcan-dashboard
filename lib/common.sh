@@ -85,8 +85,18 @@ plist() {
 
 # Start a daemon. If it is already loaded (setup.sh run twice) it is restarted so it picks up the new files.
 daemon_up() {
-  if [ "$DRY" != 1 ] && launchctl print "system/$1" >/dev/null 2>&1; then run launchctl bootout "system/$1"; fi
-  run launchctl bootstrap system "/Library/LaunchDaemons/$1.plist"
+  local label=$1 i
+  if [ "$DRY" != 1 ] && launchctl print "system/$label" >/dev/null 2>&1; then
+    run launchctl bootout "system/$label"
+    # bootout returns before the job is really gone; bootstrapping at once fails with "Input/output error".
+    for i in $(seq 1 20); do launchctl print "system/$label" >/dev/null 2>&1 || break; sleep 1; done
+  fi
+  if [ "$DRY" = 1 ]; then run launchctl bootstrap system "/Library/LaunchDaemons/$label.plist"; return 0; fi
+  for i in 1 2 3 4 5; do
+    launchctl bootstrap system "/Library/LaunchDaemons/$label.plist" 2>/dev/null && return 0
+    sleep 2
+  done
+  launchctl bootstrap system "/Library/LaunchDaemons/$label.plist"   # last try, shows the real error
 }
 
 # ---------------------------------------------------------------- waiting and checking
