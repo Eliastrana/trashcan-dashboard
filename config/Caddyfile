@@ -15,6 +15,12 @@ arcade.eliastrana.no {
 	encode gzip
 }
 
+# Pages and the /ws websocket for live games both go to the same process; Caddy upgrades websockets by itself.
+jeopardy.eliastrana.no {
+	reverse_proxy 127.0.0.1:3050
+	encode gzip
+}
+
 canvas.eliastrana.no {
 	redir https://arcade.eliastrana.no{uri} 308
 }

@@ -25,6 +25,7 @@ pack() {   # pack <app> <tar flags and paths relative to /opt/apps...>
 [ -d "$APPS/llmgate/data" ]  && pack llmgate llmgate/data
 [ -f "$APPS/hitster/web/.env.local" ] && pack hitster hitster/web/.env.local
 [ -d "$APPS/arena/public/music" ] && pack arena-music arena/public/music      # the menu music file, which is not on GitHub
+[ -f "$APPS/jeopardy/.env" ] && pack jeopardy jeopardy/.env                        # the OpenAI key for the hint button
 [ -d "$APPS/mcpack/mc-packs" ] && pack mcpack mcpack/mc-packs
 [ -d "$APPS/caddy/data" ]    && pack caddy   caddy/data
 

@@ -10,6 +10,7 @@ is ever reset. Every app runs in its **own locked-down macOS account**, started 
 | chat page for Ollama | `_svc_chatbot` | 3030 | [chatbot-ollama](https://github.com/ivanfioravanti/chatbot-ollama) + `chatbot/chatbot.patch` |
 | Ikke-Hitster (web, game server) | `_svc_hitster` | 3010, 3002 | [ikke_hitster](https://github.com/Eliastrana/ikke_hitster) |
 | arena (arcade.eliastrana.no) | `_svc_arena` | 3001 | [arcade](https://github.com/Eliastrana/arcade) |
+| Jeopardy (jeopardy.eliastrana.no, pages + live-game websocket in one process) | `_svc_jeopardy` | 3050 | [jeopardy](https://github.com/Eliastrana/jeopardy), OpenAI key from the backup |
 | Minecraft resource packs | `_svc_mcpack` | 8090 | the backup (no git repo) |
 | Minecraft server + BlueMap | `_svc_minecraft` | 25565, 8100 | Java is downloaded, the world is in the backup |
 | Caddy (front door, TLS) | `_svc_caddy` | 80, 8443 | binary is downloaded, `config/Caddyfile` is in this repo |
@@ -75,7 +76,7 @@ sudo ./backup.sh /Volumes/YourDrive/trashcan-backup-$(date +%Y%m%d)
 ## The parts by hand
 
 - **Router**: forward external 443 to the trashcan's port 8443, and 80 to 80 (Caddy asks Let's Encrypt for certificates through them). Minecraft needs 25565.
-- **DNS**: `A` records for `arcade`, `hitster`, `status`, `llm`, `minecraftmap` (and `canvas`) pointing at your public IP.
+- **DNS**: `A` records for `arcade`, `jeopardy`, `hitster`, `status`, `llm`, `minecraftmap` (and `canvas`) pointing at your public IP.
 - **Ollama**: install from https://ollama.com, then `ollama pull gemma3:1b` (the chat page's model, small and fast), and optionally `ollama pull gemma` and `ollama pull llama3.2:1b`. It listens on `127.0.0.1:11434`.
 - **Hitster keys**: they live in `/opt/apps/hitster/web/.env.local` and come back with the backup. If you start over without a backup you need
   `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL=https://hitster.eliastrana.no` and `NEXT_PUBLIC_MP_URL=wss://hitster.eliastrana.no`

@@ -12,6 +12,7 @@ id=$1; action=$2
 case $id in
   caddy)     label=com.eliastrana.svc.caddy;        allowed="restart" ;;               # stopping it would also take the status page offline
   arena)     label=com.eliastrana.svc.arena;        allowed="stop start restart" ;;
+  jeopardy)  label=com.eliastrana.svc.jeopardy;     allowed="stop start restart" ;;
   hitweb)    label=com.eliastrana.svc.hitster-web;  allowed="stop start restart" ;;
   hitws)     label=com.eliastrana.svc.hitster;      allowed="stop start restart" ;;
   mcpack)    label=com.eliastrana.svc.mcpack;       allowed="stop start restart" ;;

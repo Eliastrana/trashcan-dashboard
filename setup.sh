@@ -11,6 +11,7 @@
 #   chatbot    the chat page                       (code: chatbot-ollama + our patch)
 #   hitster    Ikke-Hitster, web and game server   (code: GitHub,                    keys: backup)
 #   arena      arcade.eliastrana.no                (code: GitHub)
+#   jeopardy   jeopardy.eliastrana.no              (code: GitHub,                    OpenAI key: backup)
 #   librespot  Spotify Connect speaker ("Trashcan")     (code: built from source with Rust, needs Spotify Premium)
 #   guests     SSH logins into small private Linux VMs for friends   (VirtualBox; add them with: sudo /opt/apps/bin/guest add <name>)
 #   mcpack     Minecraft resource packs            (code and data: backup)
@@ -30,7 +31,7 @@ APPS=/opt/apps
 NODE=/opt/node
 LABEL_PREFIX=com.eliastrana.svc
 DRY=0; YES=0; ALLOW_DEPLOY=0; BACKUP=; LAST_LOG=; LAST_LABEL=
-ALL=(base status llmgate chatbot hitster arena librespot guests mcpack minecraft caddy)
+ALL=(base status llmgate chatbot hitster arena jeopardy librespot guests mcpack minecraft caddy)
 
 # shellcheck source=lib/common.sh
 . "$HERE/lib/common.sh"
@@ -44,12 +45,12 @@ while [ $# -gt 0 ]; do
     --yes) YES=1;;
     --allow-deploy) ALLOW_DEPLOY=1;;
     --backup) shift; BACKUP=${1:-}; [ -d "$BACKUP" ] || die "--backup needs a folder that exists";;
-    -h|--help) sed -n '2,24p' "$0"; exit 0;;
+    -h|--help) sed -n '2,25p' "$0"; exit 0;;
     *) STEPS+=("$1");;
   esac
   shift
 done
-[ ${#STEPS[@]} -gt 0 ] || { sed -n '2,24p' "$0"; exit 1; }
+[ ${#STEPS[@]} -gt 0 ] || { sed -n '2,25p' "$0"; exit 1; }
 [ "$DRY" = 1 ] || [ "$(id -u)" = 0 ] || die "run with sudo (or add --dry-run to just print what would happen)"
 [ -z "$BACKUP" ] || BACKUP=$(cd "$BACKUP" && pwd)
 
@@ -112,6 +113,7 @@ EOF
     echo "# written by setup.sh: the status page may run these commands as root, and nothing else"
     for pair in "caddy restart" \
                 "arena stop" "arena start" "arena restart" \
+                "jeopardy stop" "jeopardy start" "jeopardy restart" \
                 "hitweb stop" "hitweb start" "hitweb restart" \
                 "hitws stop" "hitws start" "hitws restart" \
                 "mcpack stop" "mcpack start" "mcpack restart" \
@@ -243,6 +245,27 @@ step_arena() {
   plist "$(label_of $a)" $a "$d" "$d/logs/arena.log"
   daemon_up "$(label_of $a)"
   wait_for "arena (port 3001)" http_ok http://127.0.0.1:3001/ || die "arena did not start"
+  rm -rf "$tmp"
+}
+
+step_jeopardy() {
+  local a=jeopardy d tmp; d=$(dir_of jeopardy)
+  command -v git >/dev/null || die "git is missing (install the Xcode command line tools: xcode-select --install)"
+  create_account $a
+  say "fetching Jeopardy ($JEOPARDY_GIT, branch $JEOPARDY_BRANCH)"
+  tmp=$(mktemp -d)
+  run git clone -q --depth 1 --branch "$JEOPARDY_BRANCH" "$JEOPARDY_GIT" "$tmp/src"
+  sync_in "$tmp/src" "$d" --exclude .git --exclude node_modules --exclude .next --exclude .env
+  run mkdir -p "$d/logs"
+  restore_state $a || warn "no jeopardy.tar.gz in the backup: the monAI hint button stays off until $d/.env has OPENAI_API_KEY=... (the game itself works without it)"
+  lock_dir $a
+  say "building as $(user_of $a) (takes a minute; needs internet for the font and npm)"
+  as_app $a "$d" "npm ci --silent && npx next build >/dev/null && npm prune --omit=dev --silent"
+  # One process: Next.js pages + the websocket hub for live games, on one port (Caddy sends everything there).
+  ENVV=(HOME="$d" NODE_ENV=production PORT=3050 HOST=127.0.0.1); ARGV=("$NODE/bin/node" "$d/server.mjs")
+  plist "$(label_of $a)" $a "$d" "$d/logs/jeopardy.log"
+  daemon_up "$(label_of $a)"
+  wait_for "jeopardy (port 3050)" http_ok http://127.0.0.1:3050/health || die "jeopardy did not start"
   rm -rf "$tmp"
 }
 

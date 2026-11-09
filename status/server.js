@@ -28,10 +28,12 @@ const local = (port, p = '/') => ({ kind: 'http', url: `http://127.0.0.1:${port}
 const SERVICES = [
   { id: 'caddy', icon: 'caddy',     name: 'Caddy (reverse proxy)',     group: 'Edge',     kind: 'tcp', port: 8443, link: '127.0.0.1:8443 (443 utenfra)' },
   { id: 'arcade', icon: 'arcade',    name: 'arcade.eliastrana.no',      group: 'Websites', kind: 'public', host: 'arcade.eliastrana.no', link: 'https://arcade.eliastrana.no' },
+  { id: 'jeopardy-site', icon: 'arcade', name: 'jeopardy.eliastrana.no',    group: 'Websites', kind: 'public', host: 'jeopardy.eliastrana.no', link: 'https://jeopardy.eliastrana.no' },
   { id: 'hitster', icon: 'hitster',   name: 'hitster.eliastrana.no',     group: 'Websites', kind: 'public', host: 'hitster.eliastrana.no', link: 'https://hitster.eliastrana.no' },
   { id: 'map', icon: 'minecraft',       name: 'minecraftmap.eliastrana.no', group: 'Websites', kind: 'public', host: 'minecraftmap.eliastrana.no', link: 'https://minecraftmap.eliastrana.no' },
   { id: 'llm', icon: 'ollama',       name: 'llm.eliastrana.no',         group: 'Websites', kind: 'public', host: 'llm.eliastrana.no', link: 'https://llm.eliastrana.no' },
   { id: 'arena', icon: 'arcade',     name: 'Arena server',              group: 'Backends', ...local(3001), link: '127.0.0.1:3001' },
+  { id: 'jeopardy', icon: 'arcade',   name: 'Jeopardy (web + live)',     group: 'Backends', ...local(3050, '/health'), link: '127.0.0.1:3050' },
   { id: 'hitweb', icon: 'hitster',    name: 'Ikke-Hitster web',          group: 'Backends', ...local(3010), link: '127.0.0.1:3010' },
   { id: 'hitws', icon: 'hitster',     name: 'Ikke-Hitster game server',  group: 'Backends', ...local(3002, '/health'), link: '127.0.0.1:3002' },
   { id: 'mcpack', icon: 'minecraft',    name: 'Minecraft resource packs',  group: 'Backends', ...local(8090), link: 'http://eliastrana.tplinkdns.com:8090' },
@@ -112,7 +114,7 @@ async function cpuPercent() {
 // over that second. Every app runs in its own account (_svc_<app>), so processes are grouped by account; programs that
 // still run in the admin or personal accounts are named after what they are.
 const APP_NAMES = {
-  _svc_hitster: 'Ikke-Hitster', _svc_arena: 'Arcade', _svc_minecraft: 'Minecraft-server', _svc_caddy: 'Caddy',
+  _svc_hitster: 'Ikke-Hitster', _svc_arena: 'Arcade', _svc_jeopardy: 'Jeopardy', _svc_minecraft: 'Minecraft-server', _svc_caddy: 'Caddy',
   _svc_chatbot: 'Chat (llm)', _svc_llmgate: 'Innlogging (llm)', _svc_mcpack: 'Ressurspakker', _svc_status: 'Statussiden',
   elias: 'SSH-portfolio',
 };
@@ -217,6 +219,7 @@ const CONTROL_BIN = process.env.CONTROL_BIN || '/opt/apps/bin/svc-control';
 const CONTROLS = {
   caddy: ['restart'],                                  // stopping it would also take this page offline
   arena: ['stop', 'start', 'restart'],
+  jeopardy: ['stop', 'start', 'restart'],
   hitweb: ['stop', 'start', 'restart'],
   hitws: ['stop', 'start', 'restart'],
   mcpack: ['stop', 'start', 'restart'],
