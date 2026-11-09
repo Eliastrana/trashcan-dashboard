@@ -61,7 +61,12 @@ ADMIN_HOME=${ADMIN_HOME:-/Users/$ADMIN_USER}
 
 # Write a root-owned file whose content comes on stdin.
 put_file() {   # put_file <mode> <dest>
-  if [ "$DRY" = 1 ]; then echo "   + write $2 (mode $1)"; cat > /dev/null; else install -m "$1" -o root -g wheel /dev/stdin "$2"; fi
+  if [ "$DRY" = 1 ]; then echo "   + write $2 (mode $1)"; cat > /dev/null; return 0; fi
+  # install can not read /dev/stdin on every macOS ("Inappropriate file type or format"), so go through a temp file.
+  local tmp; tmp=$(mktemp)
+  cat > "$tmp"
+  install -m "$1" -o root -g wheel "$tmp" "$2"
+  rm -f "$tmp"
 }
 
 # ================================================================ base
