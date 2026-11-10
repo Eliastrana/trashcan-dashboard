@@ -7,7 +7,7 @@ is ever reset. Every app runs in its **own locked-down macOS account**, started 
 |---|---|---|---|
 | status page (`status/`) | `_svc_status` | 3020 | this repo |
 | llm login gate (`llm-gate/`) | `_svc_llmgate` | 3040 | this repo |
-| chat page for Ollama | `_svc_chatbot` | 3030 | [chatbot-ollama](https://github.com/ivanfioravanti/chatbot-ollama) + `chatbot/chatbot.patch` |
+| chat page for Ollama (Open WebUI) | `_svc_openwebui` | 3030 | [Open WebUI](https://github.com/open-webui/open-webui) from PyPI, pinned in `config/versions.conf`; chats are in the backup |
 | Ikke-Hitster (web, game server) | `_svc_hitster` | 3010, 3002 | [ikke_hitster](https://github.com/Eliastrana/ikke_hitster) |
 | arena (arcade.eliastrana.no) | `_svc_arena` | 3001 | [arcade](https://github.com/Eliastrana/arcade) |
 | Jeopardy (jeopardy.eliastrana.no, pages + live-game websocket in one process) | `_svc_jeopardy` | 3050 | [jeopardy](https://github.com/Eliastrana/jeopardy), OpenAI key from the backup |
@@ -77,7 +77,7 @@ sudo ./backup.sh /Volumes/YourDrive/trashcan-backup-$(date +%Y%m%d)
 
 - **Router**: forward external 443 to the trashcan's port 8443, and 80 to 80 (Caddy asks Let's Encrypt for certificates through them). Minecraft needs 25565.
 - **DNS**: `A` records for `arcade`, `jeopardy`, `hitster`, `status`, `llm`, `minecraftmap` (and `canvas`) pointing at your public IP.
-- **Ollama**: install from https://ollama.com, then `ollama pull gemma3:1b` (the chat page's model, small and fast), and optionally `ollama pull gemma` and `ollama pull llama3.2:1b`. It listens on `127.0.0.1:11434`.
+- **Ollama**: install from https://ollama.com, then `ollama pull gemma3:1b` (Open WebUI's default model, small and fast), and optionally `ollama pull gemma` and `ollama pull llama3.2:1b`. It listens on `127.0.0.1:11434`.
 - **Hitster keys**: they live in `/opt/apps/hitster/web/.env.local` and come back with the backup. If you start over without a backup you need
   `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL=https://hitster.eliastrana.no` and `NEXT_PUBLIC_MP_URL=wss://hitster.eliastrana.no`
   (the Spotify redirect URI `https://hitster.eliastrana.no/api/auth/callback/spotify` must be in the Spotify dashboard).
@@ -91,17 +91,19 @@ setup.sh            the restore script (above)
 backup.sh           saves what git cannot
 lib/common.sh       accounts, launchd, waiting, checking: shared by setup.sh
 config/Caddyfile    every site, and which port it goes to
-config/versions.conf  the versions and git sources setup.sh downloads (edit here)
+config/versions.conf  the versions and git sources setup.sh downloads (edit here, e.g. OPENWEBUI_VERSION)
 bin/                svc-control (start/stop/restart for the status page's buttons), deploy-hitster
 status/             the status page (zero dependencies, Node)
 llm-gate/           the login page and gate for llm.eliastrana.no
-chatbot/            the patch applied on top of chatbot-ollama
 migrate/            harden.sh and friends: the one-time move from the old "everything runs as trashcan" layout
 ```
 
 Day to day:
 - **Edit the Caddyfile** at `/opt/apps/caddy/Caddyfile` (admins can write it), run `/opt/apps/bin/caddy-reload`, then copy it into `config/Caddyfile` here and commit.
 - **Update the status page**: change `status/`, run `sudo ./setup.sh status` (it keeps its data and password).
+- **Update Open WebUI**: change `OPENWEBUI_VERSION` in `config/versions.conf`, run `sudo ./setup.sh openwebui` (chats are kept). Python and `uv` live in `/opt/uv`.
+- **Open WebUI has no login of its own** (`WEBUI_AUTH=False`): the llm login gate is the only password, and every visitor is the same single user. Do not switch Open WebUI's own accounts on later; it cannot convert existing data.
+- **Moved from chatbot-ollama**: `setup.sh openwebui` stops the old service. Old chats lived in the browser and do not carry over. When happy, remove the leftovers: `sudo rm -rf /opt/apps/chatbot` and delete the `_svc_chatbot` account (`sudo dscl . -delete /Users/_svc_chatbot; sudo dscl . -delete /Groups/_svc_chatbot`).
 - **Minecraft**: `/opt/apps/bin/mc-cmd say hello`, `/opt/apps/bin/mc-restart`, log in `/opt/apps/minecraft/server/logs/latest.log`.
 - **Hitster deploys**: `scripts/deploy.sh` in the Hitster repo.
 

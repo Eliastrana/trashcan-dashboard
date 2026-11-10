@@ -75,7 +75,7 @@ llm.eliastrana.no {
 				}
 			}
 
-			# The chat page (room for PDF uploads up to 50 MB).
+			# The chat page, Open WebUI (room for uploads up to 50 MB; it also uses websockets, which Caddy upgrades by itself).
 			handle {
 				request_body {
 					max_size 55MB

@@ -37,7 +37,7 @@ const SERVICES = [
   { id: 'hitweb', icon: 'hitster',    name: 'Ikke-Hitster web',          group: 'Backends', ...local(3010), link: '127.0.0.1:3010' },
   { id: 'hitws', icon: 'hitster',     name: 'Ikke-Hitster game server',  group: 'Backends', ...local(3002, '/health'), link: '127.0.0.1:3002' },
   { id: 'mcpack', icon: 'minecraft',    name: 'Minecraft resource packs',  group: 'Backends', ...local(8090), link: 'http://eliastrana.tplinkdns.com:8090' },
-  { id: 'chatbot', icon: 'ollama',   name: 'Chat (llm.eliastrana.no)',  group: 'Backends', ...local(3030), link: '127.0.0.1:3030' },
+  { id: 'openwebui', icon: 'ollama', name: 'Open WebUI (llm.eliastrana.no)', group: 'Backends', ...local(3030, '/health'), link: '127.0.0.1:3030' },
   { id: 'llmgate', icon: 'lock',   name: 'Login for llm.eliastrana.no', group: 'Backends', ...local(3040, '/login'), link: '127.0.0.1:3040' },
   { id: 'bluemap', icon: 'minecraft',   name: 'BlueMap',                   group: 'Backends', ...local(8100), link: '127.0.0.1:8100' },
   { id: 'minecraft', icon: 'minecraft', name: 'Minecraft server',          group: 'Games',    kind: 'tcp', port: 25565, link: 'eliastrana.tplinkdns.com:25565' },
@@ -115,7 +115,7 @@ async function cpuPercent() {
 // still run in the admin or personal accounts are named after what they are.
 const APP_NAMES = {
   _svc_hitster: 'Ikke-Hitster', _svc_arena: 'Arcade', _svc_jeopardy: 'Jeopardy', _svc_minecraft: 'Minecraft-server', _svc_caddy: 'Caddy',
-  _svc_chatbot: 'Chat (llm)', _svc_llmgate: 'Innlogging (llm)', _svc_mcpack: 'Ressurspakker', _svc_status: 'Statussiden',
+  _svc_openwebui: 'Open WebUI (llm)', _svc_llmgate: 'Innlogging (llm)', _svc_mcpack: 'Ressurspakker', _svc_status: 'Statussiden',
   elias: 'SSH-portfolio',
 };
 function whoIs(user, command) {

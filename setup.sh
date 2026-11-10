@@ -8,7 +8,7 @@
 #   base       folders, Node.js, helper commands, the status page's permission to restart services
 #   status     the status page                     (code: this repo,                 data: backup)
 #   llmgate    the login for llm.eliastrana.no     (code: this repo,                 data: backup)
-#   chatbot    the chat page                       (code: chatbot-ollama + our patch)
+#   openwebui  the chat page (Open WebUI)         (code: PyPI, pinned,                chats: backup)
 #   hitster    Ikke-Hitster, web and game server   (code: GitHub,                    keys: backup)
 #   arena      arcade.eliastrana.no                (code: GitHub)
 #   jeopardy   jeopardy.eliastrana.no              (code: GitHub,                    OpenAI key: backup)
@@ -29,9 +29,10 @@ set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 APPS=/opt/apps
 NODE=/opt/node
+UV=/opt/uv
 LABEL_PREFIX=com.eliastrana.svc
 DRY=0; YES=0; ALLOW_DEPLOY=0; BACKUP=; LAST_LOG=; LAST_LABEL=
-ALL=(base status llmgate chatbot hitster arena jeopardy librespot guests mcpack minecraft caddy)
+ALL=(base status llmgate openwebui hitster arena jeopardy librespot guests mcpack minecraft caddy)
 
 # shellcheck source=lib/common.sh
 . "$HERE/lib/common.sh"
@@ -88,11 +89,33 @@ ensure_node() {
   rm -rf "$tmp"
 }
 
+ensure_uv() {
+  if [ -x "$UV/bin/uv" ]; then say "uv is already in $UV ($("$UV/bin/uv" --version))"; else
+    local tarball="uv-$UV_ARCH.tar.gz" base="https://github.com/astral-sh/uv/releases/download/$UV_VERSION" tmp
+    say "installing uv $UV_VERSION into $UV (root-owned, shared; it fetches the Python that Open WebUI needs)"
+    tmp=$(mktemp -d)
+    download "$base/$tarball" "$tmp/$tarball"
+    if [ "$DRY" = 1 ]; then echo "   + check the checksum against $base/$tarball.sha256"; else
+      local want; want=$(curl -fsSL "$base/$tarball.sha256" | awk '{print $1}')
+      [ -n "$want" ] || die "could not find the checksum for $tarball"
+      check_sha "$tmp/$tarball" "$want"
+    fi
+    run mkdir -p "$UV/bin"
+    run tar -xzf "$tmp/$tarball" -C "$UV/bin" --strip-components=1
+    rm -rf "$tmp"
+  fi
+  # Python lives in /opt/uv/python so every service account can use it but none can change it.
+  run env UV_PYTHON_INSTALL_DIR="$UV/python" "$UV/bin/uv" python install "$PYTHON_VERSION"
+  run chown -R root:wheel "$UV"
+  run chmod -R go-w "$UV"
+}
+
 step_base() {
   say "folders"
   run mkdir -p "$APPS/bin"
   run chown root:wheel "$APPS" "$APPS/bin"; run chmod 755 "$APPS" "$APPS/bin"
   ensure_node
+  ensure_uv
 
   say "helper commands in $APPS/bin (root-owned, so a hacked app cannot change them)"
   run install -m 755 -o root -g wheel "$HERE/bin/svc-control" "$APPS/bin/svc-control"
@@ -181,27 +204,36 @@ step_llmgate() {
 }
 
 # ================================================================ chat page
-step_chatbot() {
-  local a=chatbot d tmp; d=$(dir_of chatbot)
-  command -v git >/dev/null || die "git is missing (install the Xcode command line tools: xcode-select --install)"
+# Open WebUI. It has no login of its own here (WEBUI_AUTH=False): the llm-gate in front of it is the one password.
+# Do not turn that on later without starting its data over; Open WebUI cannot switch from no-auth to accounts.
+step_openwebui() {
+  local a=openwebui d; d=$(dir_of openwebui)
+  [ "$DRY" = 1 ] || [ -x "$UV/bin/uv" ] || die "uv is missing: run 'sudo ./setup.sh base' first"
+  retire_old_chatbot
   create_account $a
-  say "fetching chatbot-ollama at $CHATBOT_COMMIT and applying our changes (chatbot/chatbot.patch)"
-  tmp=$(mktemp -d)
-  run git clone -q "$CHATBOT_GIT" "$tmp/src"
-  run git -C "$tmp/src" checkout -q "$CHATBOT_COMMIT"
-  run git -C "$tmp/src" apply "$HERE/chatbot/chatbot.patch"
-  sync_in "$tmp/src" "$d" --exclude .git
-  run mkdir -p "$d/logs"
+  run mkdir -p "$d/data" "$d/logs"
+  restore_state $a || true                                   # brings back data/ (chats, settings)
   lock_dir $a
-  say "installing dependencies and building, as $(user_of $a) (takes a few minutes)"
-  as_app $a "$d" "npm ci --silent && npx next build >/dev/null"
-  ENVV=(HOME="$d" NODE_ENV=production OLLAMA_HOST=http://127.0.0.1:11434 DEFAULT_MODEL="$CHATBOT_MODEL" CHAT_MODEL="$CHATBOT_MODEL")
-  ARGV=("$NODE/bin/node" "$d/node_modules/next/dist/bin/next" start -p 3030 -H 127.0.0.1)
-  plist "$(label_of $a)" $a "$d" "$d/logs/chatbot.log"
+  say "installing Open WebUI $OPENWEBUI_VERSION into its own Python $PYTHON_VERSION environment, as $(user_of $a) (takes a few minutes)"
+  as_app $a "$d" "export UV_PYTHON_INSTALL_DIR=$UV/python UV_PYTHON_DOWNLOADS=never && $UV/bin/uv venv --quiet --allow-existing --python $PYTHON_VERSION venv && $UV/bin/uv pip install --quiet --python venv/bin/python 'open-webui==$OPENWEBUI_VERSION'"
+  ENVV=(HOME="$d" DATA_DIR="$d/data" WEBUI_AUTH=False ENABLE_SIGNUP=False
+        OLLAMA_BASE_URL=http://127.0.0.1:11434 ENABLE_OPENAI_API=False DEFAULT_MODELS="$OPENWEBUI_MODEL"
+        ENABLE_VERSION_UPDATE_CHECK=False SCARF_NO_ANALYTICS=true DO_NOT_TRACK=true ANONYMIZED_TELEMETRY=false
+        PATH="$d/venv/bin:/usr/bin:/bin")
+  ARGV=("$d/venv/bin/open-webui" serve --host 127.0.0.1 --port 3030)
+  plist "$(label_of $a)" $a "$d/data" "$d/logs/openwebui.log"
   daemon_up "$(label_of $a)"
-  wait_for "chat page (port 3030)" http_ok http://127.0.0.1:3030/ || die "the chat page did not start"
-  rm -rf "$tmp"
+  WAIT_TRIES=90 wait_for "chat page (port 3030; the first start unpacks a lot and can take a few minutes)" http_ok http://127.0.0.1:3030/health || die "the chat page did not start"
   port_open 11434 || warn "Ollama is not answering on 127.0.0.1:11434. Install it from https://ollama.com and pull: $OLLAMA_MODELS"
+}
+
+# The chat page used to be chatbot-ollama in its own account. Stop it so port 3030 is free; its folder and account stay
+# until you delete them by hand (see README).
+retire_old_chatbot() {
+  local old; old=$(label_of chatbot)
+  if [ "$DRY" = 1 ]; then echo "   + stop and remove the old chatbot-ollama service ($old), if it exists"; return 0; fi
+  if launchctl print "system/$old" >/dev/null 2>&1; then say "stopping the old chatbot-ollama service"; launchctl bootout "system/$old" || true; fi
+  rm -f "/Library/LaunchDaemons/$old.plist"
 }
 
 # ================================================================ Hitster
