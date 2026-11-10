@@ -41,6 +41,17 @@ status.eliastrana.no {
 	encode gzip
 }
 
+# Shared by the two cases below: the chat page (Open WebUI).
+(chatpage) {
+	reverse_proxy 127.0.0.1:3030 {
+		flush_interval -1
+		transport http {
+			response_header_timeout 10m
+			read_timeout 10m
+		}
+	}
+}
+
 llm.eliastrana.no {
 	# The login page and its stylesheet are open to everyone.
 	@gate path /login /logout /gate.css
@@ -48,45 +59,57 @@ llm.eliastrana.no {
 		reverse_proxy 127.0.0.1:3040
 	}
 
-	# Everything else: ask the login gate first. Browsers without a session are sent to /login,
-	# scripts without credentials get a plain 401.
+	# The raw Ollama API for scripts and apps, under /ollama/: still password only (browser login or HTTP Basic).
+	# Chat and text generation only: anything that could download, change or delete models is refused.
+	handle_path /ollama/* {
+		forward_auth 127.0.0.1:3040 {
+			uri /verify
+		}
+		@blocked path /api/pull /api/push /api/create /api/delete /api/copy /api/blobs/*
+		respond @blocked 403
+		request_body {
+			max_size 5MB
+		}
+		reverse_proxy 127.0.0.1:11434 {
+			# Ollama only answers requests addressed to localhost, so present the request as one.
+			header_up Host localhost:11434
+			flush_interval -1
+			transport http {
+				response_header_timeout 10m
+				read_timeout 10m
+			}
+		}
+	}
+
+	# The chat page is open to everyone, no password. The login gate only decides WHO the visitor is to Open WebUI:
+	# a valid login cookie (log in at /login) = admin, anyone else = the shared non-admin "guest".
 	handle {
 		route {
+			# The identity headers are Caddy's to set. Never trust ones sent by the visitor.
+			request_header -X-Auth-Email
+			request_header -X-Auth-Role
 			forward_auth 127.0.0.1:3040 {
-				uri /verify
+				uri /identity
+				copy_headers X-Auth-Email X-Auth-Role
 			}
 
-			# The raw Ollama API for scripts and apps, under /ollama/. Chat and text generation only:
-			# anything that could download, change or delete models is refused.
-			handle_path /ollama/* {
-				@blocked path /api/pull /api/push /api/create /api/delete /api/copy /api/blobs/*
-				respond @blocked 403
+			# Guests: no file or knowledge uploads (Open WebUI only hides the buttons, its API would still accept them), small requests.
+			@guest header X-Auth-Role user
+			handle @guest {
+				@noupload path /api/v1/files* /api/v1/knowledge* /api/v1/retrieval* /api/v1/audio* /api/v1/images*
+				respond @noupload 403
 				request_body {
-					max_size 5MB
+					max_size 1MB
 				}
-				reverse_proxy 127.0.0.1:11434 {
-					# Ollama only answers requests addressed to localhost, so present the request as one.
-					header_up Host localhost:11434
-					flush_interval -1
-					transport http {
-						response_header_timeout 10m
-						read_timeout 10m
-					}
-				}
+				import chatpage
 			}
 
-			# The chat page, Open WebUI (room for uploads up to 50 MB; it also uses websockets, which Caddy upgrades by itself).
+			# Admin: room for PDF uploads up to 50 MB.
 			handle {
 				request_body {
 					max_size 55MB
 				}
-				reverse_proxy 127.0.0.1:3030 {
-					flush_interval -1
-					transport http {
-						response_header_timeout 10m
-						read_timeout 10m
-					}
-				}
+				import chatpage
 			}
 		}
 	}

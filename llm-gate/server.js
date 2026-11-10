@@ -1,6 +1,6 @@
 // Login gate for llm.eliastrana.no. Zero dependencies, binds to localhost; Caddy sits in front.
 //
-// Caddy asks this service about every request (forward_auth -> GET /verify). A request is let through when it carries
+// Caddy asks this service about requests (forward_auth -> GET /verify for the raw Ollama API, GET /identity for the chat page). A request is let through when it carries
 // a valid session cookie (set by the login page) or valid HTTP Basic credentials (for scripts and apps talking to /ollama/).
 // Anything else is turned away: browsers are sent to the login page, scripts get a plain 401.
 //
@@ -18,6 +18,10 @@ const DATA = process.env.DATA_DIR || path.join(HERE, 'data');
 const PASS_FILE = path.join(DATA, 'password.json');
 const BASIC_USER = process.env.BASIC_USER || 'elias';
 const COOKIE = 'llm_session';
+// Who Open WebUI should treat the visitor as. Caddy copies these two headers onto the request it sends to Open WebUI.
+// Anyone with a valid login cookie is the admin; everyone else is one shared, non-admin "guest".
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@trashcan.local';
+const GUEST_EMAIL = process.env.GUEST_EMAIL || 'guest@llm.eliastrana.no';
 const SESSION_MS = 7 * 24 * 3600_000;
 fs.mkdirSync(DATA, { recursive: true, mode: 0o700 });
 
@@ -93,7 +97,13 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === 'GET' && url.pathname === '/gate.css') return send(res, 200, asset('gate.css'), 'text/css; charset=utf-8');
 
-  // ---- the question Caddy asks for every request
+  // ---- who is this? Always answers 200: guests are allowed, they just get a lower role.
+  if (url.pathname === '/identity') {
+    const who = sessionOk ? { 'X-Auth-Email': ADMIN_EMAIL, 'X-Auth-Role': 'admin' } : { 'X-Auth-Email': GUEST_EMAIL, 'X-Auth-Role': 'user' };
+    return send(res, 200, 'ok', 'text/plain', who);
+  }
+
+  // ---- the question Caddy asks for the raw Ollama API: only a valid login gets through
   if (url.pathname === '/verify') {
     if (sessionOk) return send(res, 200, 'ok', 'text/plain');
     if (!locked(ip)) {

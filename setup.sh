@@ -204,8 +204,10 @@ step_llmgate() {
 }
 
 # ================================================================ chat page
-# Open WebUI. It has no login of its own here (WEBUI_AUTH=False): the llm-gate in front of it is the one password.
-# Do not turn that on later without starting its data over; Open WebUI cannot switch from no-auth to accounts.
+# Open WebUI, open to everyone without a password, with two identities decided by Caddy (see config/Caddyfile):
+#   guest = a shared non-admin user (no code, no tools, no uploads, chats are not saved), admin = whoever logged in at /login.
+# Open WebUI trusts the X-Auth-Email / X-Auth-Role headers Caddy sets (WEBUI_AUTH_TRUSTED_*). Safe only because it listens
+# on 127.0.0.1 and Caddy removes any such headers sent by the visitor.
 step_openwebui() {
   local a=openwebui d; d=$(dir_of openwebui)
   [ "$DRY" = 1 ] || [ -x "$UV/bin/uv" ] || die "uv is missing: run 'sudo ./setup.sh base' first"
@@ -213,11 +215,27 @@ step_openwebui() {
   create_account $a
   run mkdir -p "$d/data" "$d/logs"
   restore_state $a || true                                   # brings back data/ (chats, settings)
+  # Open WebUI keeps its first-start settings in its database and ignores changed environment variables afterwards. Data
+  # made in the older no-login mode (or any other mode) is therefore set aside, not deleted, and a fresh one is started.
+  if [ "$DRY" = 1 ]; then echo "   + if $d/data is not in guest-mode (no .guest-mode-v1 marker): move it to $d/data.before-guest-mode-<date>, start empty"; else
+    if [ -d "$d/data" ] && [ ! -f "$d/data/.guest-mode-v1" ] && [ -n "$(ls -A "$d/data" 2>/dev/null)" ]; then
+      local old="$d/data.before-guest-mode-$(date +%Y%m%d-%H%M%S)"
+      say "Open WebUI's old data was made without guest mode: moving it to $old (kept, not used) and starting fresh"
+      daemon_down_quiet "$(label_of $a)"; mv "$d/data" "$old"; mkdir -p "$d/data"
+    fi
+    touch "$d/data/.guest-mode-v1"
+  fi
   run cp "$HERE/config/openwebui-overrides.txt" "$d/overrides.txt"
   lock_dir $a
   say "installing Open WebUI $OPENWEBUI_VERSION into its own Python $PYTHON_VERSION environment, as $(user_of $a) (takes a few minutes)"
   as_app $a "$d" "export UV_PYTHON_INSTALL_DIR=$UV/python UV_PYTHON_DOWNLOADS=never && $UV/bin/uv venv --quiet --allow-existing --python $PYTHON_VERSION venv && $UV/bin/uv pip install --quiet --python venv/bin/python --override overrides.txt 'open-webui==$OPENWEBUI_VERSION'"
-  ENVV=(HOME="$d" DATA_DIR="$d/data" WEBUI_AUTH=False ENABLE_SIGNUP=False
+  ENVV=(HOME="$d" DATA_DIR="$d/data" WEBUI_AUTH=True ENABLE_SIGNUP=False DEFAULT_USER_ROLE=user
+        WEBUI_AUTH_TRUSTED_EMAIL_HEADER=X-Auth-Email WEBUI_AUTH_TRUSTED_ROLE_HEADER=X-Auth-Role
+        ENABLE_CODE_EXECUTION=False ENABLE_CODE_INTERPRETER=False
+        USER_PERMISSIONS_CHAT_TEMPORARY_ENFORCED=True USER_PERMISSIONS_CHAT_FILE_UPLOAD=False USER_PERMISSIONS_CHAT_WEB_UPLOAD=False
+        USER_PERMISSIONS_CHAT_SHARE=False USER_PERMISSIONS_FEATURES_CODE_INTERPRETER=False USER_PERMISSIONS_FEATURES_WEB_SEARCH=False
+        USER_PERMISSIONS_FEATURES_IMAGE_GENERATION=False USER_PERMISSIONS_FEATURES_MEMORIES=False USER_PERMISSIONS_FEATURES_NOTES=False
+        USER_PERMISSIONS_FEATURES_FOLDERS=False USER_PERMISSIONS_FEATURES_CALENDAR=False
         OLLAMA_BASE_URL=http://127.0.0.1:11434 ENABLE_OPENAI_API=False DEFAULT_MODELS="$OPENWEBUI_MODEL"
         ENABLE_VERSION_UPDATE_CHECK=False SCARF_NO_ANALYTICS=true DO_NOT_TRACK=true ANONYMIZED_TELEMETRY=false
         PATH="$d/venv/bin:/usr/bin:/bin")
@@ -227,6 +245,8 @@ step_openwebui() {
   WAIT_TRIES=150 wait_for "chat page (port 3030; the first start downloads a small embedding model and can take a few minutes)" http_ok http://127.0.0.1:3030/health || die "the chat page did not start"
   port_open 11434 || warn "Ollama is not answering on 127.0.0.1:11434. Install it from https://ollama.com and pull: $OLLAMA_MODELS"
 }
+
+daemon_down_quiet() { launchctl print "system/$1" >/dev/null 2>&1 && launchctl bootout "system/$1" 2>/dev/null; sleep 2; return 0; }
 
 # The chat page used to be chatbot-ollama in its own account. Stop it so port 3030 is free; its folder and account stay
 # until you delete them by hand (see README).
