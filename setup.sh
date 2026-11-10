@@ -224,7 +224,7 @@ step_openwebui() {
   ARGV=("$d/venv/bin/open-webui" serve --host 127.0.0.1 --port 3030)
   plist "$(label_of $a)" $a "$d/data" "$d/logs/openwebui.log"
   daemon_up "$(label_of $a)"
-  WAIT_TRIES=90 wait_for "chat page (port 3030; the first start unpacks a lot and can take a few minutes)" http_ok http://127.0.0.1:3030/health || die "the chat page did not start"
+  WAIT_TRIES=150 wait_for "chat page (port 3030; the first start downloads a small embedding model and can take a few minutes)" http_ok http://127.0.0.1:3030/health || die "the chat page did not start"
   port_open 11434 || warn "Ollama is not answering on 127.0.0.1:11434. Install it from https://ollama.com and pull: $OLLAMA_MODELS"
 }
 

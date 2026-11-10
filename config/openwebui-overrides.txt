@@ -8,3 +8,13 @@ pypdfium2==5.11.0
 google-re2==1.1.20240702
 argon2-cffi-bindings==25.1.0
 brotlicffi==1.1.0.0
+# Open WebUI wants torch >= 2.4 and NumPy 2 tooling; an Intel Mac only has torch 2.2.2 (which needs NumPy 1). These are the
+# newest versions that work together with it (tested by starting Open WebUI with exactly these pins).
+torch==2.2.2
+numpy==1.26.4
+transformers==4.49.0
+sentence-transformers==3.4.1
+tokenizers==0.21.0
+huggingface-hub==0.29.3
+scipy==1.16.3
+scikit-learn==1.6.1
