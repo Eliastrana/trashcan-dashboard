@@ -213,9 +213,10 @@ step_openwebui() {
   create_account $a
   run mkdir -p "$d/data" "$d/logs"
   restore_state $a || true                                   # brings back data/ (chats, settings)
+  run cp "$HERE/config/openwebui-overrides.txt" "$d/overrides.txt"
   lock_dir $a
   say "installing Open WebUI $OPENWEBUI_VERSION into its own Python $PYTHON_VERSION environment, as $(user_of $a) (takes a few minutes)"
-  as_app $a "$d" "export UV_PYTHON_INSTALL_DIR=$UV/python UV_PYTHON_DOWNLOADS=never && $UV/bin/uv venv --quiet --allow-existing --python $PYTHON_VERSION venv && $UV/bin/uv pip install --quiet --python venv/bin/python 'open-webui==$OPENWEBUI_VERSION'"
+  as_app $a "$d" "export UV_PYTHON_INSTALL_DIR=$UV/python UV_PYTHON_DOWNLOADS=never && $UV/bin/uv venv --quiet --allow-existing --python $PYTHON_VERSION venv && $UV/bin/uv pip install --quiet --python venv/bin/python --override overrides.txt 'open-webui==$OPENWEBUI_VERSION'"
   ENVV=(HOME="$d" DATA_DIR="$d/data" WEBUI_AUTH=False ENABLE_SIGNUP=False
         OLLAMA_BASE_URL=http://127.0.0.1:11434 ENABLE_OPENAI_API=False DEFAULT_MODELS="$OPENWEBUI_MODEL"
         ENABLE_VERSION_UPDATE_CHECK=False SCARF_NO_ANALYTICS=true DO_NOT_TRACK=true ANONYMIZED_TELEMETRY=false

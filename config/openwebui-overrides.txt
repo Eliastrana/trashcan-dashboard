@@ -1,0 +1,6 @@
+# The trashcan is an Intel Mac on macOS 12. These packages only ship wheels for macOS 13+ at the versions Open WebUI
+# asks for, so uv is told to use the newest older version that still has a macOS 12 wheel. Used by setup.sh openwebui.
+# Plain chat does not depend on them; they matter for PDF/document upload and the local embedding model (RAG).
+onnxruntime==1.19.2
+opencv-python-headless==4.10.0.84
+pypdfium2==5.11.0
