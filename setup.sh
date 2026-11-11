@@ -232,6 +232,7 @@ step_openwebui() {
   ENVV=(HOME="$d" DATA_DIR="$d/data" WEBUI_AUTH=True ENABLE_SIGNUP=False DEFAULT_USER_ROLE=user
         WEBUI_AUTH_TRUSTED_EMAIL_HEADER=X-Auth-Email WEBUI_AUTH_TRUSTED_ROLE_HEADER=X-Auth-Role
         ENABLE_CODE_EXECUTION=False ENABLE_CODE_INTERPRETER=False
+        ENABLE_TITLE_GENERATION=False ENABLE_TAGS_GENERATION=False ENABLE_FOLLOW_UP_GENERATION=False ENABLE_AUTOCOMPLETE_GENERATION=False
         BYPASS_MODEL_ACCESS_CONTROL=True      # the guest sees every Ollama model without an admin having to share each one
         DEFAULT_MODEL_PARAMS='{"function_calling":"legacy"}'   # do not send Open WebUI's built-in tools: these Ollama models reject them
         USER_PERMISSIONS_CHAT_TEMPORARY_ENFORCED=True USER_PERMISSIONS_CHAT_FILE_UPLOAD=False USER_PERMISSIONS_CHAT_WEB_UPLOAD=False
